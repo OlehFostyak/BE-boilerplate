@@ -4,6 +4,7 @@ export const PostSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   description: z.string().optional().nullable(),
+  commentsCount: z.number(),
   updatedAt: z.date(),
   createdAt: z.date()
 });

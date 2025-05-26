@@ -11,7 +11,7 @@ declare module 'fastify' {
 
 const plugin: FastifyPluginAsync = async function (fastify) {
   fastify.addHook('onRequest', async (request) => {
-    // eslint-disable-next-line no-param-reassign
+     
     request.starTimeMS = Date.now();
   });
 
