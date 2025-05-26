@@ -15,12 +15,11 @@ const plugin: FastifyPluginAsync = async function (fastify) {
 
       // Add or modify the existing tags
       if (!routeOptions.schema) {
-        // eslint-disable-next-line no-param-reassign
         routeOptions.schema = {};
       }
 
       const existingTags = routeOptions.schema.tags || [];
-      // eslint-disable-next-line no-param-reassign
+
       routeOptions.schema.tags = [...existingTags, tag];
     }
   });
