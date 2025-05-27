@@ -15,6 +15,13 @@
       "when": 1748346434860,
       "tag": "0001_dark_mystique",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1748352885319,
+      "tag": "0002_sleepy_solo",
+      "breakpoints": true
     }
   ]
 }
