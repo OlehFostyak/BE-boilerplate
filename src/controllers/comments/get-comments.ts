@@ -1,4 +1,4 @@
-import { ICommentRepo } from 'src/types/ICommentRepo';
+import { ICommentRepo } from 'src/types/comments/ICommentRepo';
 
 export async function getComments(params: {
   commentRepo: ICommentRepo;

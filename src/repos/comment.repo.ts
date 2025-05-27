@@ -1,7 +1,7 @@
 import { eq, desc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { ICommentRepo } from 'src/types/ICommentRepo';
-import { CommentSchema } from 'src/types/Comment';
+import { ICommentRepo } from 'src/types/comments/ICommentRepo';
+import { CommentSchema } from 'src/types/comments/Comment';
 import { commentTable } from 'src/services/drizzle/schema';
 
 export function getCommentRepo(db: NodePgDatabase): ICommentRepo {

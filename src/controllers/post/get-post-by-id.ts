@@ -1,4 +1,4 @@
-import { IPostRepo } from 'src/types/IPostRepo';
+import { IPostRepo } from 'src/types/posts/IPostRepo';
 
 export async function getPostById(params: {
   postRepo: IPostRepo;

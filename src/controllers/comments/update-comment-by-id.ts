@@ -1,5 +1,5 @@
-import { ICommentRepo } from 'src/types/ICommentRepo';
-import { Comment } from 'src/types/Comment';
+import { ICommentRepo } from 'src/types/comments/ICommentRepo';
+import { Comment } from 'src/types/comments/Comment';
 
 export async function updateCommentById(params: {
   commentRepo: ICommentRepo;

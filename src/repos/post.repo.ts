@@ -1,7 +1,7 @@
 import { eq, count, getTableColumns, desc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { IPostRepo } from 'src/types/IPostRepo';
-import { Post, PostSchema } from 'src/types/Post';
+import { IPostRepo } from 'src/types/posts/IPostRepo';
+import { Post, PostSchema } from 'src/types/posts/Post';
 import { postTable, commentTable } from 'src/services/drizzle/schema';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
