@@ -1,6 +1,6 @@
+import { z } from 'zod';
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { z } from 'zod';
 import { CreateCommentReqSchema } from 'src/api/routes/schemas/comments/CreateCommentReqSchema';
 import { GetCommentByIdRespSchema } from 'src/api/routes/schemas/comments/GetCommentByIdRespSchema';
 import { GetCommentsRespSchema } from 'src/api/routes/schemas/comments/GetCommentsRespSchema';
@@ -10,80 +10,72 @@ import { getComments } from 'src/controllers/comments/get-comments';
 import { updateCommentById } from 'src/controllers/comments/update-comment-by-id';
 import { deleteCommentById } from 'src/controllers/comments/delete-comment-by-id';
 
+const createCommentRoute = {
+  schema: {
+    params: z.object({
+      postId: z.string().uuid()
+    }),
+    response: {
+      200: GetCommentByIdRespSchema
+    },
+    body: CreateCommentReqSchema
+  }
+};
+
+const getCommentsRoute = {
+  schema: {
+    params: z.object({
+      postId: z.string().uuid()
+    }),
+    response: {
+      200: GetCommentsRespSchema
+    }
+  }
+};
+
+const updateCommentByIdRoute = {
+  schema: {
+    params: z.object({
+      commentId: z.string().uuid()
+    }),
+    response: {
+      200: GetCommentByIdRespSchema
+    },
+    body: UpdateCommentReqSchema
+  }
+};
+
+const deleteCommentByIdRoute = {
+  schema: {
+    params: z.object({
+      commentId: z.string().uuid()
+    })
+  }
+};
+
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
 
-  fastify.post('/', {
-    schema: {
-      params: z.object({
-        postId: z.string().uuid()
-      }),
-      response: {
-        200: GetCommentByIdRespSchema
-      },
-      body: CreateCommentReqSchema
-    }
-  }, async req => {
-    const comment = await createComment({
-      commentRepo: fastify.repos.commentRepo,
-      data: { ...req.body, postId: req.params.postId }
-    });
-    console.log('comment', comment);
-    return comment;
-  });
+  fastify.post('/', createCommentRoute, async req => createComment({
+    commentRepo: fastify.repos.commentRepo,
+    data: { ...req.body, postId: req.params.postId }
+  }));
 
-  fastify.get('/', {
-    schema: {
-      params: z.object({
-        postId: z.string().uuid()
-      }),
-      response: {
-        200: GetCommentsRespSchema
-      }
-    }
-  }, async req => {
-    const comments = await getComments({
-      commentRepo: fastify.repos.commentRepo,
-      postId: req.params.postId
-    });
-    return comments;
-  });
+  fastify.get('/', getCommentsRoute, async req => getComments({
+    commentRepo: fastify.repos.commentRepo,
+    postId: req.params.postId
+  }));
 
-  fastify.patch('/:commentId', {
-    schema: {
-      params: z.object({
-        commentId: z.string()
-      }),
-      response: {
-        200: GetCommentByIdRespSchema
-      },
-      body: UpdateCommentReqSchema
-    }
-  }, async req => {
-    const comment = await updateCommentById({
-      commentRepo: fastify.repos.commentRepo,
-      commentId: req.params.commentId,
-      data: req.body
-    });
-    return comment;
-  });
+  fastify.patch('/:commentId', updateCommentByIdRoute, async req => updateCommentById({
+    commentRepo: fastify.repos.commentRepo,
+    commentId: req.params.commentId,
+    data: req.body
+  }));
 
-  fastify.delete('/:commentId', {
-    schema: {
-      params: z.object({
-        commentId: z.string()
-      }),
-      response: {
-        200: GetCommentByIdRespSchema
-      }
-    }
-  }, async req => {
-    const comment = await deleteCommentById({
-      commentRepo: fastify.repos.commentRepo,
-      commentId: req.params.commentId
-    });
-    return comment;
-  });
+  fastify.delete('/:commentId', deleteCommentByIdRoute, async req => deleteCommentById({
+    commentRepo: fastify.repos.commentRepo,
+    commentId: req.params.commentId
+  }));
 };
 
 export default routes;

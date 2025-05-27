@@ -7,58 +7,55 @@ import { getPostById } from 'src/controllers/post/get-post-by-id';
 import { updatePostById } from 'src/controllers/post/update-post-by-id';
 import { deletePostById } from 'src/controllers/post/delete-post-by-id';
 
+const getPostByIdRoute = {
+  schema: {
+    params: z.object({
+      postId: z.string().uuid()
+    }),
+    response: {
+      200: GetPostByIdRespSchema
+    }
+  }
+};
+
+const updatePostByIdRoute = {
+  schema: {
+    params: z.object({
+      postId: z.string().uuid()
+    }),
+    response: {
+      200: GetPostByIdRespSchema
+    },
+    body: UpdatePostReqSchema
+  }
+};
+
+const deletePostByIdRoute = {
+  schema: {
+    params: z.object({
+      postId: z.string().uuid()
+    })
+  }
+};
+
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
 
-  fastify.get('/', {
-    schema: {
-      params: z.object({
-        postId: z.string().uuid()
-      }),
-      response: {
-        200: GetPostByIdRespSchema
-      }
-    }
-  }, async req => {
-    const post = await getPostById({
-      postRepo: fastify.repos.postRepo,
-      postId: req.params.postId
-    });
-    return post;
-  });
+  fastify.get('/', getPostByIdRoute, async req => getPostById({
+    postRepo: fastify.repos.postRepo,
+    postId: req.params.postId
+  }));
 
-  fastify.patch('/', {
-    schema: {
-      params: z.object({
-        postId: z.string().uuid()
-      }),
-      response: {
-        200: GetPostByIdRespSchema
-      },
-      body: UpdatePostReqSchema
-    }
-  }, async req => {
-    const post = await updatePostById({
-      postRepo: fastify.repos.postRepo,
-      postId: req.params.postId,
-      data: req.body
-    });
-    return post;
-  });
+  fastify.patch('/', updatePostByIdRoute, async req => updatePostById({
+    postRepo: fastify.repos.postRepo,
+    postId: req.params.postId,
+    data: req.body
+  }));
 
-  fastify.delete('/', {
-    schema: {
-      params: z.object({
-        postId: z.string().uuid()
-      })
-    }
-  }, async req => {
-    await deletePostById({
-      postRepo: fastify.repos.postRepo,
-      postId: req.params.postId
-    });
-    return {};
-  });
+  fastify.delete('/', deletePostByIdRoute, async req => deletePostById({
+    postRepo: fastify.repos.postRepo,
+    postId: req.params.postId
+  }));
 };
 
 export default routes;

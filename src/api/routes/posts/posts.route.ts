@@ -6,36 +6,34 @@ import { GetPostsRespSchema } from 'src/api/routes/schemas/posts/GetPostsRespSch
 import { createPost } from 'src/controllers/post/create-post';
 import { getPosts } from 'src/controllers/post/get-posts';
 
+const createPostRoute = {
+  schema: {
+    response: {
+      200: GetPostByIdRespSchema
+    },
+    body: CreatePostReqSchema
+  }
+};
+
+const getPostsRoute = {
+  schema: {
+    response: {
+      200: GetPostsRespSchema
+    }
+  }
+};
+
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
 
-  fastify.post('/', {
-    schema: {
-      response: {
-        200: GetPostByIdRespSchema
-      },
-      body: CreatePostReqSchema
-    }
-  }, async req => {
-    const post = await createPost({
-      postRepo: fastify.repos.postRepo,
-      data: req.body
-    });
-    return post;
-  });
+  fastify.post('/', createPostRoute, async (req) => createPost({
+    postRepo: fastify.repos.postRepo,
+    data: req.body
+  }));
 
-  fastify.get('/', {
-    schema: {
-      response: {
-        200: GetPostsRespSchema
-      }
-    }
-  }, async () => {
-    const posts = await getPosts({
-      postRepo: fastify.repos.postRepo
-    });
-    return posts;
-  });
+  fastify.get('/', getPostsRoute, async () => getPosts({
+    postRepo: fastify.repos.postRepo
+  }));
 };
 
 export default routes;
