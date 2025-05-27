@@ -42,7 +42,11 @@ async function run() {
   });
 
   server.register(helmet);
-  server.register(cors);
+  server.register(cors, {
+    origin: ['http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    credentials: true
+  });
 
   // TODO check why in docker build it fails without "!"
   if (['local', 'staging'].includes(process.env.NODE_ENV!)) {

@@ -1,4 +1,4 @@
-import { eq, count, getTableColumns } from 'drizzle-orm';
+import { eq, count, getTableColumns, desc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IPostRepo } from 'src/types/IPostRepo';
 import { Post, PostSchema } from 'src/types/Post';
@@ -14,7 +14,8 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         })
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
-        .groupBy(postTable.id);
+        .groupBy(postTable.id)
+        .orderBy(desc(postTable.createdAt));
       return posts.map(post => PostSchema.parse(post));
     },
     async getPostById(id) {

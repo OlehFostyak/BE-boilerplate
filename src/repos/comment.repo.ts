@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ICommentRepo } from 'src/types/ICommentRepo';
 import { CommentSchema } from 'src/types/Comment';
@@ -10,7 +10,8 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
       const comments = await db
         .select()
         .from(commentTable)
-        .where(eq(commentTable.postId, postId));
+        .where(eq(commentTable.postId, postId))
+        .orderBy(desc(commentTable.createdAt));
       return comments.map(comment => CommentSchema.parse(comment));
     },
     async createComment(data) {
