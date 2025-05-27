@@ -1,14 +1,13 @@
+import { HttpError } from 'src/api/errors/HttpError';
 import { IPostRepo } from 'src/types/posts/IPostRepo';
 
 export async function deletePostById(params: {
   postRepo: IPostRepo;
   postId: string;
 }) {
-  const post = await params.postRepo.getPostById(params.postId);
+  const post = await params.postRepo.deletePostById(params.postId);
 
   if (!post) {
-    throw new Error('Post not found');
+    throw new HttpError(404, 'Post not found');
   }
-
-  await params.postRepo.deletePostById(params.postId);
 }
