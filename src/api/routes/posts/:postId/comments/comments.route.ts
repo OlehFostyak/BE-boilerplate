@@ -1,10 +1,10 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { CreateCommentReqSchema } from '../../../schemas/CreateCommentReqSchema';
-import { GetCommentByIdRespSchema } from '../../../schemas/GetCommentByIdRespSchema';
-import { GetCommentsRespSchema } from '../../../schemas/GetCommentsRespSchema';
-import { UpdateCommentReqSchema } from '../../../schemas/UpdateCommentReqSchema';
+import { CreateCommentReqSchema } from 'src/api/routes/schemas/comments/CreateCommentReqSchema';
+import { GetCommentByIdRespSchema } from 'src/api/routes/schemas/comments/GetCommentByIdRespSchema';
+import { GetCommentsRespSchema } from 'src/api/routes/schemas/comments/GetCommentsRespSchema';
+import { UpdateCommentReqSchema } from 'src/api/routes/schemas/comments/UpdateCommentReqSchema';
 import { createComment } from 'src/controllers/comments/create-comment';
 import { getComments } from 'src/controllers/comments/get-comments';
 import { updateCommentById } from 'src/controllers/comments/update-comment-by-id';
