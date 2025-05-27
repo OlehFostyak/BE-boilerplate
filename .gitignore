@@ -15,8 +15,6 @@ dist
 *.tfstate
 *.tfstate.*
 crash.log
-drizzle-out/*
-drizzle-out/meta/*
 
 override.tf
 override.tf.json

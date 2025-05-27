@@ -45,7 +45,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .returning();
       return posts.length > 0 ? PostSchema.parse(posts[0]) : null;
     },
-    
+
     async deletePostById(id) {
       await db.delete(postTable).where(eq(postTable.id, id));
     }

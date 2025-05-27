@@ -1,7 +1,7 @@
 import { eq, desc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ICommentRepo } from 'src/types/comments/ICommentRepo';
-import { CommentSchema } from 'src/types/comments/Comment';
+import { CommentSchema, Comment } from 'src/types/comments/Comment';
 import { commentTable } from 'src/services/drizzle/schema';
 
 export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
@@ -16,10 +16,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
     },
 
     async createComment(data) {
-      const [newComment] = await db.insert(commentTable).values({
-        text: data.text || '',
-        postId: data.postId || ''
-      } as typeof commentTable.$inferInsert).returning();
+      const [newComment] = await db.insert(commentTable).values(data as Comment).returning();
 
       return CommentSchema.parse(newComment);
     },
@@ -33,7 +30,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         .returning();
       return comments.length > 0 ? CommentSchema.parse(comments[0]) : null;
     },
-    
+
     async deleteCommentById(id) {
       const [comment] = await db
         .select({

@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 
