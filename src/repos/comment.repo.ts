@@ -14,6 +14,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         .orderBy(desc(commentTable.createdAt));
       return comments.map(comment => CommentSchema.parse(comment));
     },
+
     async createComment(data) {
       const [newComment] = await db.insert(commentTable).values({
         text: data.text || '',
@@ -22,6 +23,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
 
       return CommentSchema.parse(newComment);
     },
+
     async updateCommentById(id, data) {
       const { postId, ...updateData } = data;
       const comments = await db
@@ -31,6 +33,7 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
         .returning();
       return comments.length > 0 ? CommentSchema.parse(comments[0]) : null;
     },
+    
     async deleteCommentById(id) {
       const [comment] = await db
         .select({

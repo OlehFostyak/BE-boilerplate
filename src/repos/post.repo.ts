@@ -18,6 +18,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .orderBy(desc(postTable.createdAt));
       return posts.map(post => PostSchema.parse(post));
     },
+
     async getPostById(id) {
       const post = await db
         .select({
@@ -30,10 +31,12 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .groupBy(postTable.id);
       return post.length > 0 ? PostSchema.parse(post[0]) : null;
     },
+
     async createPost(data) {
       const post = await db.insert(postTable).values(data as Post).returning();
       return PostSchema.parse(post[0]);
     },
+
     async updatePostById(id, data) {
       const posts = await db
         .update(postTable)
@@ -42,6 +45,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .returning();
       return posts.length > 0 ? PostSchema.parse(posts[0]) : null;
     },
+    
     async deletePostById(id) {
       await db.delete(postTable).where(eq(postTable.id, id));
     }
