@@ -1,8 +1,8 @@
 import { fakerEN as faker } from '@faker-js/faker';
-import axios from 'axios';
-import { API_URL, createReadlineInterface, getNumberInput } from '../seed-utils';
+import { createReadlineInterface, getNumberInput, getDbConnection, executeSeed } from '../seed-utils';
+import { postTable } from 'src/services/drizzle/schema';
 
-async function getPostInput(): Promise<number> {
+async function getInput(): Promise<number> {
   const rl = createReadlineInterface();
 
   try {
@@ -16,36 +16,19 @@ async function getPostInput(): Promise<number> {
 async function createPosts(numberOfPosts: number) {
   console.log(`Starting to create ${numberOfPosts} posts...`);
   
-  try {
-    const posts = await Promise.all(
-      Array.from({ length: numberOfPosts }, async () => {
-        const postData = {
-          title: faker.company.catchPhrase(),
-          description: faker.commerce.productDescription()
-        };
+  const db = getDbConnection();
+  const postsData = Array.from({ length: numberOfPosts }, () => ({
+    title: faker.company.catchPhrase(),
+    description: faker.commerce.productDescription()
+  }));
 
-        const response = await axios.post(`${API_URL}/posts`, postData);
-        return response.data;
-      })
-    );
-    
-    console.log(`Successfully created ${posts.length} posts!`);
+  const posts = await db.insert(postTable).values(postsData);
+  console.log(`Successfully created ${numberOfPosts} posts in a single query!`);
 
-    return posts;
-  } catch (error) {
-    console.error('Error creating posts:', error);
-    throw error;
-  }
+  return posts;
 }
 
-// Execute the seeding
-getPostInput()
-  .then(async (count) => {
-    await createPosts(count);
-    console.log('Seeding completed successfully!');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('Seeding failed:', error);
-    process.exit(1);
-  });
+executeSeed(async () => {
+  const numberOfPosts = await getInput();
+  return createPosts(numberOfPosts);
+});

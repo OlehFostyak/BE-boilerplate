@@ -1,13 +1,13 @@
 import { fakerEN as faker } from '@faker-js/faker';
-import axios from 'axios';
-import { API_URL, createReadlineInterface, getNumberInput, question } from '../seed-utils';
+import { createReadlineInterface, getNumberInput, question, getDbConnection, executeSeed } from '../seed-utils';
+import { commentTable } from 'src/services/drizzle/schema';
 
 interface CommentSeedInput {
   postId: string;
   numberOfComments: number;
 }
 
-async function getCommentInput(): Promise<CommentSeedInput> {
+async function getInput(): Promise<CommentSeedInput> {
   const rl = createReadlineInterface();
   try {
     const postId = await question(rl, 'Enter the post ID: ');
@@ -25,35 +25,19 @@ async function getCommentInput(): Promise<CommentSeedInput> {
 async function createComments(postId: string, numberOfComments: number) {
   console.log(`Starting to create ${numberOfComments} comments for post ${postId}...`);
 
-  try {
-    const comments = await Promise.all(
-      Array.from({ length: numberOfComments }, async () => {
-        const commentData = {
-          text: faker.hacker.phrase()
-        };
+  const db = getDbConnection();
+  const commentsData = Array.from({ length: numberOfComments }, () => ({
+    text: faker.hacker.phrase(),
+    postId
+  }));
 
-        const response = await axios.post(`${API_URL}/posts/${postId}/comments`, commentData);
-        return response.data;
-      })
-    );
+  const comments = await db.insert(commentTable).values(commentsData);
+  console.log(`Successfully created ${numberOfComments} comments in a single query!`);
 
-    console.log(`Successfully created ${comments.length} comments!`);
-
-    return comments;
-  } catch (error) {
-    console.error('Error creating comments:', error);
-    throw error;
-  }
+  return comments;
 }
 
-// Execute the seeding
-getCommentInput()
-  .then(async ({ postId, numberOfComments }) => {
-    await createComments(postId, numberOfComments);
-    console.log('Seeding completed successfully!');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('Seeding failed:', error);
-    process.exit(1);
-  });
+executeSeed(async () => {
+  const { postId, numberOfComments } = await getInput();
+  return createComments(postId, numberOfComments);
+});

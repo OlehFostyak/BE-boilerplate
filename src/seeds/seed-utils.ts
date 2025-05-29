@@ -1,7 +1,7 @@
-import readline from 'readline';
 import 'dotenv/config';
-
-export const API_URL = `http://${process.env.HOST}:${process.env.PORT}/api`;
+import readline from 'readline';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { getDb } from 'src/services/drizzle/drizzle.service';
 
 export function createReadlineInterface() {
   return readline.createInterface({
@@ -27,4 +27,26 @@ export async function getNumberInput(rl: readline.Interface, prompt: string): Pr
   }
   
   return number;
+}
+
+export function getDbConnection(): NodePgDatabase {
+  return getDb({
+    port: parseInt(process.env.PGPORT!),
+    host: process.env.PGHOST!,
+    pwd: process.env.PGPASSWORD!,
+    user: process.env.PGUSERNAME!,
+    db: process.env.PGDATABASE!,
+    logsEnabled: true
+  });
+}
+
+export async function executeSeed<T>(seedFn: () => Promise<T>): Promise<void> {
+  try {
+    await seedFn();
+    console.log('Seeding completed successfully!');
+    process.exit(0);
+  } catch (error) {
+    console.error('Seeding failed:', error);
+    process.exit(1);
+  }
 }
