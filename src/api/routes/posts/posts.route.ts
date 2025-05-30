@@ -4,6 +4,7 @@ import { CreatePostReqSchema } from 'src/api/routes/schemas/posts/CreatePostReqS
 import { GetPostByIdRespSchema } from 'src/api/routes/schemas/posts/GetPostByIdRespSchema';
 import { GetPostsRespSchema } from 'src/api/routes/schemas/posts/GetPostsRespSchema';
 import { PaginationQuerySchema } from 'src/api/routes/schemas/PaginationSchema';
+import { getPaginatedResponse } from 'src/api/utils/pagination';
 import { createPost } from 'src/controllers/post/create-post';
 import { getPosts } from 'src/controllers/post/get-posts';
 
@@ -41,19 +42,7 @@ const routes: FastifyPluginAsync = async function (f) {
       offset
     });
 
-    const page = Math.floor(offset / limit) + 1;
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      data: posts,
-      meta: {
-        total,
-        limit,
-        offset,
-        page,
-        totalPages
-      }
-    };
+    return getPaginatedResponse(posts, total, limit, offset);
   });
 };
 
