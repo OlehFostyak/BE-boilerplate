@@ -9,4 +9,9 @@ export const PostSchema = z.object({
   createdAt: z.date()
 });
 
+export interface GetPostsResult {
+  posts: Post[];
+  total: number;
+}
+
 export type Post = z.infer<typeof PostSchema>;

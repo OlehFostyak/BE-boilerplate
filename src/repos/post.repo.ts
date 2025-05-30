@@ -1,12 +1,16 @@
 import { eq, count, getTableColumns, desc } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IPostRepo } from 'src/types/posts/IPostRepo';
-import { Post, PostSchema } from 'src/types/posts/Post';
+import { Post, PostSchema, GetPostsResult } from 'src/types/posts/Post';
 import { postTable, commentTable } from 'src/services/drizzle/schema';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
   return {
-    async getPosts() {
+    async getPosts({ limit, offset }): Promise<GetPostsResult> {
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(postTable);
+
       const posts = await db
         .select({
           ...getTableColumns(postTable),
@@ -15,8 +19,14 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
         .groupBy(postTable.id)
-        .orderBy(desc(postTable.createdAt));
-      return posts.map(post => PostSchema.parse(post));
+        .orderBy(desc(postTable.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      return {
+        posts: posts.map(post => PostSchema.parse(post)),
+        total
+      };
     },
 
     async getPostById(id) {

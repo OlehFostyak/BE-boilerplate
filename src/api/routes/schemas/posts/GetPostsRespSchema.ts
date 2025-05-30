@@ -1,4 +1,8 @@
 import { z } from 'zod';
-import { GetPostByIdRespSchema } from './GetPostByIdRespSchema';
+import { PostSchema } from 'src/types/posts/Post';
+import { PaginationMetaSchema } from '../PaginationSchema';
 
-export const GetPostsRespSchema = z.array(GetPostByIdRespSchema);
+export const GetPostsRespSchema = z.object({
+  data: z.array(PostSchema),
+  meta: PaginationMetaSchema
+});
