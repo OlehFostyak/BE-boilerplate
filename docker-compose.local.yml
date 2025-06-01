@@ -4,6 +4,7 @@ services:
   postgres:
     # postgres:17.2 is supported on aws rds
     image: postgres:17.2
+    command: ["postgres", "-c", "shared_preload_libraries=pg_trgm"]
     ports:
       - ${PGPORT}:${PGPORT}
     environment:

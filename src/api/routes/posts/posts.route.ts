@@ -35,11 +35,12 @@ const routes: FastifyPluginAsync = async function (f) {
   }));
 
   fastify.get('/', getPostsRoute, async (req) => {
-    const { limit, offset } = req.query;
+    const { limit, offset, search } = req.query;
     const { posts, total } = await getPosts({
       postRepo: fastify.repos.postRepo,
       limit,
-      offset
+      offset,
+      search
     });
 
     return getPaginatedResponse(posts, total, limit, offset);

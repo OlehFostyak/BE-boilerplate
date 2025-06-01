@@ -1,4 +1,4 @@
-import { eq, count, getTableColumns, desc } from 'drizzle-orm';
+import { eq, count, getTableColumns, desc, or, sql } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IPostRepo } from 'src/types/posts/IPostRepo';
 import { Post, PostSchema, GetPostsResult } from 'src/types/posts/Post';
@@ -6,10 +6,18 @@ import { postTable, commentTable } from 'src/services/drizzle/schema';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
   return {
-    async getPosts({ limit, offset }): Promise<GetPostsResult> {
+    async getPosts({ limit, offset, search }): Promise<GetPostsResult> {
+      const searchCondition = search
+        ? or(
+            sql`similarity(${postTable.title}::text, ${search}::text) > 0.1`,
+            sql`similarity(${postTable.description}::text, ${search}::text) > 0.1`
+          )
+        : undefined;
+
       const [{ total }] = await db
         .select({ total: count() })
-        .from(postTable);
+        .from(postTable)
+        .where(searchCondition);
 
       const posts = await db
         .select({
@@ -18,6 +26,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         })
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
+        .where(searchCondition)
         .groupBy(postTable.id)
         .orderBy(desc(postTable.createdAt))
         .limit(limit)
