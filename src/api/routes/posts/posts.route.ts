@@ -4,6 +4,7 @@ import { CreatePostReqSchema } from 'src/api/routes/schemas/posts/CreatePostReqS
 import { GetPostByIdRespSchema } from 'src/api/routes/schemas/posts/GetPostByIdRespSchema';
 import { GetPostsRespSchema } from 'src/api/routes/schemas/posts/GetPostsRespSchema';
 import { PaginationQuerySchema } from 'src/api/routes/schemas/PaginationSchema';
+import { PostsSortSchema } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { getPaginatedResponse } from 'src/api/utils/pagination';
 import { createPost } from 'src/controllers/post/create-post';
 import { getPosts } from 'src/controllers/post/get-posts';
@@ -22,7 +23,7 @@ const getPostsRoute = {
     response: {
       200: GetPostsRespSchema
     },
-    querystring: PaginationQuerySchema
+    querystring: PaginationQuerySchema.merge(PostsSortSchema)
   }
 };
 
@@ -35,12 +36,14 @@ const routes: FastifyPluginAsync = async function (f) {
   }));
 
   fastify.get('/', getPostsRoute, async (req) => {
-    const { limit, offset, search } = req.query;
+    const { limit, offset, search, sortBy, sortOrder } = req.query;
     const { posts, total } = await getPosts({
       postRepo: fastify.repos.postRepo,
       limit,
       offset,
-      search
+      search,
+      sortBy,
+      sortOrder
     });
 
     return getPaginatedResponse(posts, total, limit, offset);
