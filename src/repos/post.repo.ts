@@ -1,31 +1,52 @@
-import { eq, count, getTableColumns, or, sql } from 'drizzle-orm';
+import { eq, count, getTableColumns, or, sql, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IPostRepo } from 'src/types/posts/IPostRepo';
 import { Post, PostSchema, GetPostsResult } from 'src/types/posts/Post';
 import { postTable, commentTable } from 'src/services/drizzle/schema';
 import { PostSortField } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { createSortBuilder } from 'src/services/drizzle/utils/sorting';
+import { createCountFilter } from 'src/services/drizzle/utils/filtering';
 
 export function getPostRepo(db: NodePgDatabase): IPostRepo {
   return {
-    async getPosts({ limit, offset, search, sortBy, sortOrder }): Promise<GetPostsResult> {
+    async getPosts({
+      limit,
+      offset,
+      search,
+      sortBy,
+      sortOrder,
+      commentsCountOperator,
+      commentsCountValue
+    }): Promise<GetPostsResult> {
+      // Create search condition
       const searchCondition = search
         ? or(
             sql`similarity(${postTable.title}::text, ${search}::text) > 0.1`,
             sql`similarity(${postTable.description}::text, ${search}::text) > 0.1`
           )
         : undefined;
+        
+      // Create comments count filter condition
+      const commentsCountCondition = commentsCountOperator ? createCountFilter(
+        commentsCountOperator,
+        commentsCountValue,
+        db
+          .select({ count: count() })
+          .from(commentTable)
+          .where(eq(commentTable.postId, postTable.id))
+      ) : undefined;
 
+      // Create sort function
       const sortPosts = createSortBuilder<PostSortField>({
         title: (direction) => direction(postTable.title),
         createdAt: (direction) => direction(postTable.createdAt),
-        commentsCount: (direction) => direction(sql<number>`count(${commentTable.id})`)
+        commentsCount: (direction) => direction(count(commentTable.id))
       });
 
       const [{ total }] = await db
         .select({ total: count() })
         .from(postTable)
-        .where(searchCondition);
+        .where(and(searchCondition, commentsCountCondition));
 
       const posts = await db
         .select({
@@ -34,7 +55,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         })
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
-        .where(searchCondition)
+        .where(and(searchCondition, commentsCountCondition))
         .groupBy(postTable.id)
         .orderBy(sortPosts(sortBy, sortOrder))
         .limit(limit)
