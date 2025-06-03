@@ -1,8 +1,5 @@
-import { ICommentRepo } from 'src/types/comments/ICommentRepo';
+import { DeleteCommentByIdParams } from 'src/types/comments/Comment';
 
-export async function deleteCommentById(params: {
-  commentRepo: ICommentRepo;
-  commentId: string;
-}) {
+export async function deleteCommentById(params: DeleteCommentByIdParams) {
   await params.commentRepo.deleteCommentById(params.commentId);
 }

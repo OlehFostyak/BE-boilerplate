@@ -1,8 +1,8 @@
-import { Comment } from './Comment';
+import { Comment, CreateCommentRepoParams, DeleteCommentByIdRepoParams, GetCommentsRepoParams } from './Comment';
 
 export interface ICommentRepo {
-  getComments(postId: string): Promise<Comment[]>;
-  createComment(data: Partial<Comment>): Promise<Comment>;
+  getComments(postId: GetCommentsRepoParams): Promise<Comment[]>;
+  createComment(data: CreateCommentRepoParams): Promise<Comment>;
   updateCommentById(id: string, data: Partial<Comment>): Promise<Comment | null>;
-  deleteCommentById(id: string): Promise<void>;
+  deleteCommentById(id: DeleteCommentByIdRepoParams): Promise<void>;
 }

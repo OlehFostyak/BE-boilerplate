@@ -1,10 +1,7 @@
 import { HttpError } from 'src/api/errors/HttpError';
-import { IPostRepo } from 'src/types/posts/IPostRepo';
+import { GetPostByIdParams } from 'src/types/posts/Post';
 
-export async function getPostById(params: {
-  postRepo: IPostRepo;
-  postId: string;
-}) {
+export async function getPostById(params: GetPostByIdParams) {
   const post = await params.postRepo.getPostById(params.postId);
 
   if (!post) {

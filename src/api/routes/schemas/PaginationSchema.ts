@@ -13,6 +13,3 @@ export const PaginationMetaSchema = z.object({
   page: z.number(),
   totalPages: z.number()
 });
-
-export type PaginationQuery = z.infer<typeof PaginationQuerySchema>;
-export type PaginationMeta = z.infer<typeof PaginationMetaSchema>;

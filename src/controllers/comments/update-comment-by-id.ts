@@ -1,12 +1,7 @@
 import { HttpError } from 'src/api/errors/HttpError';
-import { ICommentRepo } from 'src/types/comments/ICommentRepo';
-import { Comment } from 'src/types/comments/Comment';
+import { UpdateCommentByIdParams } from 'src/types/comments/Comment';
 
-export async function updateCommentById(params: {
-  commentRepo: ICommentRepo;
-  commentId: string;
-  data: Partial<Comment>;
-}) {
+export async function updateCommentById(params: UpdateCommentByIdParams) {
   const comment = await params.commentRepo.updateCommentById(params.commentId, params.data);
 
   if (!comment) {
