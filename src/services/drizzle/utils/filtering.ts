@@ -1,11 +1,9 @@
 import { SQLWrapper, eq, gt, gte, lt, lte, ne } from 'drizzle-orm';
 
-// Define operators as a constant array to avoid duplication
 export const COUNT_OPERATORS = [
   '=', '!=', '>', '>=', '<', '<=', 'is_blank', 'is_not_blank'
 ] as const;
 
-// Define the type based on the array
 export type CountOperator = typeof COUNT_OPERATORS[number];
 
 export function createCountFilter(
