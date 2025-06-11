@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SortOrderSchema } from '../SortSchema';
+import { SortOrderSchema } from 'src/api/routes/schemas/SortSchema';
 
 export const POST_SORT_FIELDS = ['title', 'createdAt', 'commentsCount'] as const;
 

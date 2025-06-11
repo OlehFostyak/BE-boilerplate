@@ -1,6 +1,6 @@
  
 import { preHandlerAsyncHookHandler } from 'fastify';
-import { HttpError } from '../errors/HttpError';
+import { HttpError } from 'src/api/errors/HttpError';
 
 export const testHook: preHandlerAsyncHookHandler = async function (request) {
   try {
