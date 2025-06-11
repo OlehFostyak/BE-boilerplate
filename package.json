@@ -20,6 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.826.0",
     "@fastify/autoload": "^6.0.3",
     "@fastify/basic-auth": "^6.0.3",
     "@fastify/cors": "^10.0.2",
