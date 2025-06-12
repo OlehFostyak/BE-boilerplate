@@ -1,5 +1,4 @@
- 
-import 'src/services/env/env.service';
+ import 'src/services/env/env.service';
 import fastify from 'fastify';
 import autoload from '@fastify/autoload';
 import path from 'path';
@@ -15,6 +14,7 @@ import requestId from './plugins/request-id.plugin';
 import responseTime from './plugins/response-time.plugin';
 import healthCheck from './plugins/health-check.plugin';
 import routePrinter from './plugins/route-printer.plugin';
+import authPlugin from './plugins/auth.plugin';
 import { setupSwagger } from './plugins/swagger.plugin';
 import { getLoggerOptions } from './plugins/logger.plugin';
 import { getDb, dbHealthCheck } from 'src/services/drizzle/drizzle.service';
@@ -99,18 +99,19 @@ async function run() {
     skip: ['/api/documentation'],
     logLevel: 'silent'
   });
+  
+  // Register authentication plugin
+  server.register(authPlugin);
 
   // load routes
   server.register(autoload, {
     dir: path.join(__dirname, 'routes'),
-    ignoreFilter: 'schemas',
+    dirNameRoutePrefix: true,
     options: {
       prefix: '/api'
-    },
-    autoHooks: true,
-    cascadeHooks: true,
-    routeParams: true
+    }
   });
+
   await server.ready();
   await server.listen({
     port: parseInt(process.env.PORT || ''),

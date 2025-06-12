@@ -1,5 +1,10 @@
 export enum EErrorCodes {
-  GENERAL_ERROR = 1000
+  GENERAL_ERROR = 1000,
+  BAD_REQUEST = 1001,
+  UNAUTHORIZED = 1002,
+  NOT_FOUND = 1003,
+  CONFLICT = 1004,
+  VALIDATION_ERROR = 1005
 }
 
 export function getErrorCodesDescription() {

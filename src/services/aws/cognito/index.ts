@@ -1,176 +1,79 @@
-import {
-  CognitoIdentityProviderClient,
-  SignUpCommand,
-  ConfirmSignUpCommand,
-  InitiateAuthCommand,
-  ForgotPasswordCommand,
-  ConfirmForgotPasswordCommand,
-  AuthFlowType,
-} from '@aws-sdk/client-cognito-identity-provider';
-import { awsConfig } from '../config';
-import { env } from '../../env/index';
+/**
+ * AWS Cognito Service
+ * 
+ * Модульний підхід до роботи з AWS Cognito.
+ * Кожна функціональність винесена в окремий модуль для кращої читабельності та підтримки.
+ */
 
-// Create a Cognito client
-const cognitoClient = new CognitoIdentityProviderClient(awsConfig);
+// Експортуємо типи та інтерфейси
+export * from './modules/types';
 
-export interface SignUpParams {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}
+// Експортуємо клієнт та конфігурацію
+export * from './modules/client';
 
-export interface ConfirmSignUpParams {
-  email: string;
-  confirmationCode: string;
-}
+// Експортуємо функції для роботи з токенами
+export * from './modules/token';
 
-export interface SignInParams {
-  email: string;
-  password: string;
-}
+// Експортуємо функції для аутентифікації
+export * from './modules/auth';
 
-export interface ForgotPasswordParams {
-  email: string;
-}
+// Експортуємо функції для управління користувачами
+export * from './modules/user';
 
-export interface ConfirmForgotPasswordParams {
-  email: string;
-  confirmationCode: string;
-  newPassword: string;
-}
+// Для зворотної сумісності з існуючим кодом
+import { verifyToken } from './modules/token';
+import { signIn } from './modules/auth';
+import { adminCreateUser, adminSetUserPassword } from './modules/user';
+import { AdminCreateUserParams, SignInParams, CognitoUserPayload } from './modules/types';
 
+/**
+ * Клас CognitoService для зворотної сумісності
+ * 
+ * Цей клас використовує функції з модулів і надає той самий інтерфейс,
+ * що й попередня версія, щоб існуючий код продовжував працювати.
+ */
 export class CognitoService {
-  private readonly clientId: string;
-  private readonly userPoolId: string;
-
-  constructor() {
-    this.clientId = env.AWS_COGNITO_CLIENT_ID;
-    this.userPoolId = env.AWS_COGNITO_USER_POOL_ID;
+  /**
+   * Перевіряє токен доступу через AWS Cognito API
+   */
+  async verifyToken(token: string): Promise<CognitoUserPayload> {
+    return verifyToken(token);
   }
 
   /**
-   * Register a new user in Cognito
+   * Вхід користувача в систему
    */
-  async signUp({ email, password, firstName, lastName }: SignUpParams) {
-    const command = new SignUpCommand({
-      ClientId: this.clientId,
-      Username: email,
-      Password: password,
-      UserAttributes: [
-        {
-          Name: 'email',
-          Value: email,
-        },
-        {
-          Name: 'given_name',
-          Value: firstName,
-        },
-        {
-          Name: 'family_name',
-          Value: lastName,
-        },
-      ],
-    });
-
-    try {
-      const response = await cognitoClient.send(command);
-      return {
-        success: true,
-        userSub: response.UserSub || '',
-        userConfirmed: response.UserConfirmed,
-      };
-    } catch (error) {
-      console.error('Error signing up user:', error);
-      throw error;
-    }
+  async signIn(params: SignInParams) {
+    return signIn(params);
   }
 
   /**
-   * Confirm a user's registration with the confirmation code
+   * Створення користувача (адмін API)
    */
-  async confirmSignUp({ email, confirmationCode }: ConfirmSignUpParams) {
-    const command = new ConfirmSignUpCommand({
-      ClientId: this.clientId,
-      Username: email,
-      ConfirmationCode: confirmationCode,
-    });
-
-    try {
-      await cognitoClient.send(command);
-      return { success: true };
-    } catch (error) {
-      console.error('Error confirming sign up:', error);
-      throw error;
-    }
+  async adminCreateUser(params: AdminCreateUserParams) {
+    return adminCreateUser(params);
   }
 
   /**
-   * Sign in a user and get tokens
+   * Встановлення пароля для користувача (адмін API)
    */
-  async signIn({ email, password }: SignInParams) {
-    const command = new InitiateAuthCommand({
-      AuthFlow: AuthFlowType.USER_PASSWORD_AUTH,
-      ClientId: this.clientId,
-      AuthParameters: {
-        USERNAME: email,
-        PASSWORD: password,
-      },
-    });
-
-    try {
-      const response = await cognitoClient.send(command);
-      return {
-        success: true,
-        accessToken: response.AuthenticationResult?.AccessToken,
-        refreshToken: response.AuthenticationResult?.RefreshToken,
-        idToken: response.AuthenticationResult?.IdToken,
-        expiresIn: response.AuthenticationResult?.ExpiresIn,
-      };
-    } catch (error) {
-      console.error('Error signing in:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Initiate forgot password flow
-   */
-  async forgotPassword({ email }: ForgotPasswordParams) {
-    const command = new ForgotPasswordCommand({
-      ClientId: this.clientId,
-      Username: email,
-    });
-
-    try {
-      await cognitoClient.send(command);
-      return { success: true };
-    } catch (error) {
-      console.error('Error initiating forgot password:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Confirm new password with confirmation code
-   */
-  async confirmForgotPassword({ email, confirmationCode, newPassword }: ConfirmForgotPasswordParams) {
-    const command = new ConfirmForgotPasswordCommand({
-      ClientId: this.clientId,
-      Username: email,
-      ConfirmationCode: confirmationCode,
-      Password: newPassword,
-    });
-
-    try {
-      await cognitoClient.send(command);
-      return { success: true };
-    } catch (error) {
-      console.error('Error confirming new password:', error);
-      throw error;
-    }
+  async adminSetUserPassword(params: { email: string; password: string; permanent: boolean }) {
+    return adminSetUserPassword(params);
   }
 }
 
-// Export a singleton instance
-export const cognitoService = new CognitoService();
+// Singleton instance для зворотної сумісності
+let cognitoServiceInstance: CognitoService | null = null;
+
+/**
+ * Отримати екземпляр CognitoService
+ */
+export function getCognitoService(): CognitoService {
+  if (!cognitoServiceInstance) {
+    cognitoServiceInstance = new CognitoService();
+  }
+  return cognitoServiceInstance;
+}
+
+// Експортуємо екземпляр сервісу для зворотної сумісності
+export const cognitoService = getCognitoService();
