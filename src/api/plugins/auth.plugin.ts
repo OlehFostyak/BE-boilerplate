@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 import { getUserByToken } from 'src/services/aws/cognito';
 import { UnauthorizedError } from 'src/types/errors/auth';
+import { getUserRepo } from 'src/repos/user.repo';
 
 /**
  * Plugin to register authentication middleware
@@ -30,15 +31,22 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
         throw new UnauthorizedError('No token provided');
       }
 
-      const user = await getUserByToken(token);
+      const cognitoUser = await getUserByToken(token);
       
-      // Add the user to the request object
-      request.user = user;
+      if (!cognitoUser.sub) {
+        throw new UnauthorizedError('User ID not found in token');
+      }
       
-      // Use sub as userId
-      request.userId = user.sub;
+      const dbUser = await getUserRepo(fastify.db).getUserByCognitoId(cognitoUser.sub);
+      
+      if (!dbUser) {
+        throw new UnauthorizedError('User not found in database');
+      }
+      
+      request.user = cognitoUser;
+      
+      request.userId = dbUser.id;
     } catch (_error) {
-      // Let the error handler handle the error
       throw new UnauthorizedError('Invalid or expired token');
     }
   });

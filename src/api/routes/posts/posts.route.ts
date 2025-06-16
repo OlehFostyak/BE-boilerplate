@@ -33,7 +33,7 @@ const routes: FastifyPluginAsync = async function (f) {
 
   fastify.post('/', createPostRoute, async (req) => createPost({
     postRepo: fastify.repos.postRepo,
-    data: req.body
+    data: { ...req.body, userId: req.userId as string }
   }));
 
   fastify.get('/', getPostsRoute, async (req) => {

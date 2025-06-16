@@ -54,7 +54,6 @@ export async function adminCreateUser(params: AdminCreateUserParams): Promise<Ad
   console.log(`Creating user: ${email}`);
   
   try {
-    // Create user
     const response = await cognitoClient.send(
       new AdminCreateUserCommand({
         UserPoolId: cognitoConfig.userPoolId,

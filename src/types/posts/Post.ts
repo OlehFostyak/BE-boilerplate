@@ -8,10 +8,29 @@ export const PostSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   description: z.string().optional().nullable(),
+  userId: z.string().uuid(),
   commentsCount: z.number().optional(),
   updatedAt: z.date(),
   createdAt: z.date()
 });
+
+export const PostInsertSchema = z.object({
+  title: z.string(),
+  userId: z.string().uuid(),
+  description: z.string().optional().nullable(),
+  id: z.string().uuid().optional(),
+  updatedAt: z.date().optional(),
+  createdAt: z.date().optional()
+});
+
+export const PostUpdateSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional().nullable(),
+  userId: z.string().uuid().optional()
+});
+
+export type PostInsert = z.infer<typeof PostInsertSchema>;
+export type PostUpdate = z.infer<typeof PostUpdateSchema>;
 
 export interface GetPostsResult {
   posts: Post[];
@@ -39,13 +58,13 @@ export type GetPostByIdParams = {
 
 export type CreatePostParams = {
   postRepo: IPostRepo;
-  data: Partial<Post>;
+  data: PostInsert;
 };
 
 export type UpdatePostByIdParams = {
   postRepo: IPostRepo;
   postId: string;
-  data: Partial<Post>;
+  data: PostUpdate;
 };
 
 export type DeletePostByIdParams = {

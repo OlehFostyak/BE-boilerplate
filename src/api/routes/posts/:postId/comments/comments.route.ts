@@ -58,7 +58,7 @@ const routes: FastifyPluginAsync = async function (f) {
 
   fastify.post('/', createCommentRoute, async req => createComment({
     commentRepo: fastify.repos.commentRepo,
-    data: { ...req.body, postId: req.params.postId }
+    data: { ...req.body, postId: req.params.postId, userId: req.userId as string }
   }));
 
   fastify.get('/', getCommentsRoute, async req => getComments({

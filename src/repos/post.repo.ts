@@ -1,7 +1,7 @@
 import { eq, count, getTableColumns, or, sql, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IPostRepo } from 'src/types/posts/IPostRepo';
-import { Post, PostSchema, GetPostsResult } from 'src/types/posts/Post';
+import { GetPostsResult, PostSchema } from 'src/types/posts/Post';
 import { postTable, commentTable } from 'src/services/drizzle/schema';
 import { PostSortField } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { createSortBuilder } from 'src/services/drizzle/utils/sorting';
@@ -104,14 +104,14 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
     },
 
     async createPost(data) {
-      const post = await db.insert(postTable).values(data as Post).returning();
+      const post = await db.insert(postTable).values(data).returning();
       return PostSchema.parse(post[0]);
     },
 
     async updatePostById(id, data) {
       const posts = await db
         .update(postTable)
-        .set(data as Post)
+        .set(data)
         .where(eq(postTable.id, id))
         .returning();
       return posts.length > 0 ? PostSchema.parse(posts[0]) : null;
