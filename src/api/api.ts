@@ -14,7 +14,7 @@ import requestId from './plugins/request-id.plugin';
 import responseTime from './plugins/response-time.plugin';
 import healthCheck from './plugins/health-check.plugin';
 import routePrinter from './plugins/route-printer.plugin';
-import authPlugin from './plugins/auth.plugin';
+import { authHook } from './hooks/auth.hook';
 import { setupSwagger } from './plugins/swagger.plugin';
 import { getLoggerOptions } from './plugins/logger.plugin';
 import { getDb, dbHealthCheck } from 'src/services/drizzle/drizzle.service';
@@ -100,8 +100,14 @@ async function run() {
     logLevel: 'silent'
   });
   
-  // Register authentication plugin
-  server.register(authPlugin);
+  // Register request decorators for authentication
+  server.decorateRequest('user', undefined);
+  server.decorateRequest('userId', undefined);
+  
+  // Register authentication hook directly
+  server.addHook('onRequest', async (request, reply) => {
+    return authHook(request, reply);
+  });
 
   // load routes
   server.register(autoload, {

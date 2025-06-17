@@ -11,7 +11,12 @@ interface Options {
 }
 
 const plugin: FastifyPluginAsync<Options> = async function (fastify, opts) {
-  fastify.get(opts.path, { logLevel: 'silent' }, async (_req, reply) => {
+  fastify.get(opts.path, { 
+    logLevel: 'silent',
+    config: {
+      skipAuthHook: true // Skip authentication for health check
+    }
+  }, async (_req, reply) => {
     const healthChecks = await Promise.all(opts.healthChecksPromises.map((check) => check()));
     const statusCode = healthChecks.some((healthCheck) => !healthCheck.isOk) ? 500 : 200;
     reply.status(statusCode).send(healthCheckResponseSchema.parse(healthChecks));

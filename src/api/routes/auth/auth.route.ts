@@ -11,6 +11,9 @@ const registerRoute = {
       200: RegisterResponseSchema
     },
     body: RegisterRequestSchema
+  },
+  config: {
+    skipAuthHook: true // Skip authentication for this route
   }
 };
 
@@ -20,6 +23,9 @@ const loginRoute = {
       200: LoginResponseSchema
     },
     body: LoginRequestSchema
+  },
+  config: {
+    skipAuthHook: true // Skip authentication for this route
   }
 };
 

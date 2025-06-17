@@ -1,5 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CognitoUserPayload, getUserByToken } from 'src/services/aws/cognito';
+import { UnauthorizedError } from 'src/types/errors/auth';
+import { getUserRepo } from 'src/repos/user.repo';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -8,33 +10,52 @@ declare module 'fastify' {
   }
 }
 
-// Authentication hook for protected routes
-export async function authHook(request: FastifyRequest, reply: FastifyReply) {
+/**
+ * Authentication hook for protected routes
+ */
+export async function authHook(
+  request: FastifyRequest, 
+  reply: FastifyReply
+) {
+  // Check if the route is marked to skip authentication
+  const routeConfig = request.routeOptions?.config as { skipAuthHook?: boolean } | undefined;
+  
+  // Skip authentication for routes marked with skipAuthHook
+  if (routeConfig?.skipAuthHook === true) {
+    return;
+  }
+
   try {
-    const authHeader = request.headers.authorization;
+    const token = request.headers.authorization?.replace('Bearer ', '');
     
-    if (!authHeader) {
-      return reply.status(401).send({ error: 'Authorization header is missing' });
+    if (!token) {
+      throw new UnauthorizedError('No token provided');
     }
 
-    // Check if the authorization header has the correct format
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      return reply.status(401).send({ error: 'Invalid authorization format' });
+    const cognitoUser = await getUserByToken(token);
+    
+    if (!cognitoUser.sub) {
+      throw new UnauthorizedError('User ID not found in token');
     }
-
-    const token = parts[1];
     
-    // Verify the token using AWS Cognito API
-    // GetUserCommand only works with access tokens
-    const user = await getUserByToken(token);
+    // Get the user from database to verify they exist
+    const db = (request as any).server?.db;
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
     
-    // Add the user to the request object
-    request.user = user;
+    const dbUser = await getUserRepo(db).getUserByCognitoId(cognitoUser.sub);
     
-    // Use sub as userId
-    request.userId = user.sub;
+    if (!dbUser) {
+      throw new UnauthorizedError('User not found in database');
+    }
+    
+    request.user = cognitoUser;
+    request.userId = dbUser.id;
   } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return reply.status(401).send({ error: error.message });
+    }
     console.error('Authentication error:', error instanceof Error ? error.message : 'Unknown error');
     return reply.status(401).send({ error: 'Invalid or expired token' });
   }
