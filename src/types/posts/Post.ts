@@ -3,12 +3,13 @@ import { IPostRepo } from './IPostRepo';
 import { PostSortField } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { SortOrder } from 'src/api/routes/schemas/SortSchema';
 import { CountOperator } from 'src/services/drizzle/utils/filtering';
+import { UserProfileResponseSchema } from 'src/api/routes/schemas/user/ProfileSchema';
 
 export const PostSchema = z.object({
   id: z.string().uuid(),
   title: z.string(),
   description: z.string().optional().nullable(),
-  userId: z.string().uuid(),
+  user: UserProfileResponseSchema,
   commentsCount: z.number().optional(),
   updatedAt: z.date(),
   createdAt: z.date()
@@ -65,11 +66,13 @@ export type UpdatePostByIdParams = {
   postRepo: IPostRepo;
   postId: string;
   data: PostUpdate;
+  userId: string;
 };
 
 export type DeletePostByIdParams = {
   postRepo: IPostRepo;
   postId: string;
+  userId: string;
 };
 
 export type Post = z.infer<typeof PostSchema>;

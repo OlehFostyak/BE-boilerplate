@@ -49,12 +49,14 @@ const routes: FastifyPluginAsync = async function (f) {
   fastify.patch('/', updatePostByIdRoute, async req => updatePostById({
     postRepo: fastify.repos.postRepo,
     postId: req.params.postId,
-    data: req.body
+    data: req.body,
+    userId: req.userId as string // Передаємо userId з запиту
   }));
 
   fastify.delete('/', deletePostByIdRoute, async req => deletePostById({
     postRepo: fastify.repos.postRepo,
-    postId: req.params.postId
+    postId: req.params.postId,
+    userId: req.userId as string // Передаємо userId з запиту
   }));
 };
 

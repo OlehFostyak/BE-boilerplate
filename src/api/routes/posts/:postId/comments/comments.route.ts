@@ -48,7 +48,8 @@ const updateCommentByIdRoute = {
 const deleteCommentByIdRoute = {
   schema: {
     params: z.object({
-      commentId: z.string().uuid()
+      commentId: z.string().uuid(),
+      postId: z.string().uuid()
     })
   }
 };
@@ -61,21 +62,34 @@ const routes: FastifyPluginAsync = async function (f) {
     data: { ...req.body, postId: req.params.postId, userId: req.userId as string }
   }));
 
-  fastify.get('/', getCommentsRoute, async req => getComments({
-    commentRepo: fastify.repos.commentRepo,
-    postId: req.params.postId
-  }));
+  fastify.get('/', getCommentsRoute, async (req) => {
+    return getComments({
+      commentRepo: fastify.repos.commentRepo,
+      postId: req.params.postId
+    });
+  });
 
-  fastify.patch('/:commentId', updateCommentByIdRoute, async req => updateCommentById({
-    commentRepo: fastify.repos.commentRepo,
-    commentId: req.params.commentId,
-    data: req.body
-  }));
+  fastify.patch('/:commentId', updateCommentByIdRoute, async (req) => {
+    return updateCommentById({
+      commentRepo: fastify.repos.commentRepo,
+      commentId: req.params.commentId,
+      data: req.body,
+      userId: req.userId as string
+    });
+  });
 
-  fastify.delete('/:commentId', deleteCommentByIdRoute, async req => deleteCommentById({
-    commentRepo: fastify.repos.commentRepo,
-    commentId: req.params.commentId
-  }));
+  fastify.delete('/:commentId', deleteCommentByIdRoute, async (req) => {
+    // Get post owner ID first to check if the user is the post owner
+    const post = await fastify.repos.postRepo.getPostById(req.params.postId);
+    const postOwnerId = post?.user?.id;
+    
+    return deleteCommentById({
+      commentRepo: fastify.repos.commentRepo,
+      commentId: req.params.commentId,
+      userId: req.userId as string,
+      postOwnerId
+    });
+  });
 };
 
 export default routes;

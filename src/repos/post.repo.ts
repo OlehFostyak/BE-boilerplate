@@ -2,11 +2,12 @@ import { eq, count, getTableColumns, or, sql, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IPostRepo } from 'src/types/posts/IPostRepo';
 import { GetPostsResult, PostSchema } from 'src/types/posts/Post';
-import { postTable, commentTable } from 'src/services/drizzle/schema';
+import { postTable, commentTable, userTable } from 'src/services/drizzle/schema';
 import { PostSortField } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { createSortBuilder } from 'src/services/drizzle/utils/sorting';
 import { CountOperator, createCountFilter } from 'src/services/drizzle/utils/filtering';
 import { SortOrder } from 'src/api/routes/schemas/SortSchema';
+import { getUserFields } from 'src/services/drizzle/utils/user-fields';
 
 function searchPosts(search: string | undefined) {
   if (!search) {
@@ -74,12 +75,14 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const posts = await db
         .select({
           ...getTableColumns(postTable),
-          commentsCount: count(commentTable.id)
+          commentsCount: count(commentTable.id),
+          user: getUserFields()
         })
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
+        .leftJoin(userTable, eq(userTable.id, postTable.userId))
         .where(and(searchPosts(search), commentsCountCondition))
-        .groupBy(postTable.id)
+        .groupBy(postTable.id, userTable.id)
         .orderBy(sortPosts(sortBy, sortOrder))
         .limit(limit)
         .offset(offset);
@@ -94,32 +97,68 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const post = await db
         .select({
           ...getTableColumns(postTable),
-          commentsCount: count(commentTable.id)
+          commentsCount: count(commentTable.id),
+          user: getUserFields()
         })
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
+        .leftJoin(userTable, eq(userTable.id, postTable.userId))
         .where(eq(postTable.id, id))
-        .groupBy(postTable.id);
+        .groupBy(postTable.id, userTable.id);
       return post.length > 0 ? PostSchema.parse(post[0]) : null;
     },
 
     async createPost(data) {
       const post = await db.insert(postTable).values(data).returning();
-      return PostSchema.parse(post[0]);
+      
+      const result = await db
+        .select({
+          ...getTableColumns(postTable),
+          user: getUserFields()
+        })
+        .from(postTable)
+        .leftJoin(userTable, eq(userTable.id, postTable.userId))
+        .where(eq(postTable.id, post[0].id));
+      
+      return PostSchema.parse(result[0]);
     },
 
     async updatePostById(id, data) {
-      const posts = await db
+      await db
         .update(postTable)
         .set(data)
-        .where(eq(postTable.id, id))
-        .returning();
-      return posts.length > 0 ? PostSchema.parse(posts[0]) : null;
+        .where(eq(postTable.id, id));
+      
+      const result = await db
+        .select({
+          ...getTableColumns(postTable),
+          user: getUserFields()
+        })
+        .from(postTable)
+        .leftJoin(userTable, eq(userTable.id, postTable.userId))
+        .where(eq(postTable.id, id));
+      
+      return result.length > 0 ? PostSchema.parse(result[0]) : null;
     },
 
     async deletePostById(id) {
-      const posts = await db.delete(postTable).where(eq(postTable.id, id)).returning();
-      return posts.length > 0 ? PostSchema.parse(posts[0]) : null;
+      // Get post with user information before deleting
+      const post = await db
+        .select({
+          ...getTableColumns(postTable),
+          user: getUserFields()
+        })
+        .from(postTable)
+        .leftJoin(userTable, eq(userTable.id, postTable.userId))
+        .where(eq(postTable.id, id));
+      
+      if (post.length === 0) {
+        return null;
+      }
+      
+      await db.delete(postTable).where(eq(postTable.id, id));
+      
+      return PostSchema.parse(post[0]);
     }
   };
 }
