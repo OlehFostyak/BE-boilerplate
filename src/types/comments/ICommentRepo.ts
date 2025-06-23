@@ -1,4 +1,4 @@
-import { Comment, CommentInsert, CommentUpdate, DeleteCommentByIdRepoParams, GetCommentsRepoParams } from './Comment';
+import { Comment, CommentInsert, CommentUpdate, GetCommentsRepoParams } from './Comment';
 
 export interface ICommentRepo {
   getComments(postId: GetCommentsRepoParams): Promise<Comment[]>;
