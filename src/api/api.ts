@@ -104,8 +104,12 @@ async function run() {
   server.decorateRequest('user', undefined);
   server.decorateRequest('userId', undefined);
   
-  // Register authentication hook directly
+  // Register authentication hook directly, but exclude documentation route
   server.addHook('onRequest', async (request, reply) => {
+    // Skip authentication for documentation routes
+    if (request.url.startsWith('/api/documentation')) {
+      return;
+    }
     return authHook(request, reply);
   });
 
