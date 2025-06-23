@@ -5,6 +5,8 @@ export const userTable = pgTable('users', {
   id: uuid().primaryKey().defaultRandom(),
   cognitoId: text('cognito_id').notNull().unique(),
   email: text('email').notNull().unique(),
+  firstName: varchar({ length: 255 }).notNull(),
+  lastName: varchar({ length: 255 }).notNull(),
   createdAt: timestamp().defaultNow(),
   updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
 });

@@ -5,8 +5,8 @@ import { IUserRepo } from 'src/types/users/IUserRepo';
 export interface RegisterParams {
   email: string;
   password: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
   userRepo: IUserRepo;
 }
 
@@ -25,7 +25,9 @@ export async function register({ email, password, firstName, lastName, userRepo 
       try {
         await userRepo.createUser({
           cognitoId: result.userSub,
-          email
+          email,
+          firstName,
+          lastName
         });
       } catch (dbError: any) {
         console.error('Error creating user in database:', dbError);

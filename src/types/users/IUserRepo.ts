@@ -3,6 +3,8 @@ import { User, NewUser } from 'src/types/User';
 export interface CreateUserParams {
   cognitoId: string;
   email: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface IUserRepo {

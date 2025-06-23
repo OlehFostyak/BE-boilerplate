@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const RegisterRequestSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  firstName: z.string().optional(),
-  lastName: z.string().optional()
+  firstName: z.string(),
+  lastName: z.string()
 });
 
 export const RegisterResponseSchema = z.object({
