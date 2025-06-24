@@ -1,5 +1,4 @@
 import { HttpError } from 'src/api/errors/HttpError';
-import { ForbiddenError } from 'src/types/errors/ForbiddenError';
 import { UpdatePostByIdParams } from 'src/types/posts/Post';
 
 export async function updatePostById(params: UpdatePostByIdParams) {
@@ -10,9 +9,12 @@ export async function updatePostById(params: UpdatePostByIdParams) {
     throw new HttpError(404, 'Post not found');
   }
 
-  // Check if the user is the owner of the post
-  if (existingPost.user.id !== params.userId) {
-    throw new ForbiddenError('You do not have permission to update this post');
+  // Check if the user is the owner of the post or an admin
+  const isPostOwner = existingPost.user.id === params.userId;
+  const isAdmin = params.userRole === 'admin';
+  
+  if (!isPostOwner && !isAdmin) {
+    throw new HttpError(403, 'You do not have permission to update this post');
   }
 
   // Update the post

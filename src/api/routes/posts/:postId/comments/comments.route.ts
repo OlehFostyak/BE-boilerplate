@@ -9,6 +9,7 @@ import { createComment } from 'src/controllers/comments/create-comment';
 import { getComments } from 'src/controllers/comments/get-comments';
 import { updateCommentById } from 'src/controllers/comments/update-comment-by-id';
 import { deleteCommentById } from 'src/controllers/comments/delete-comment-by-id';
+import { UserRole } from 'src/types/users/User';
 
 const createCommentRoute = {
   schema: {
@@ -74,7 +75,8 @@ const routes: FastifyPluginAsync = async function (f) {
       commentRepo: fastify.repos.commentRepo,
       commentId: req.params.commentId,
       data: req.body,
-      userId: req.userId as string
+      userId: req.userId as string,
+      userRole: req.userRole as UserRole
     });
   });
 
@@ -87,6 +89,7 @@ const routes: FastifyPluginAsync = async function (f) {
       commentRepo: fastify.repos.commentRepo,
       commentId: req.params.commentId,
       userId: req.userId as string,
+      userRole: req.userRole as UserRole,
       postOwnerId
     });
   });

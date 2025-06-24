@@ -1,7 +1,21 @@
-import { eq } from 'drizzle-orm';
+import { eq, count, or, sql, getTableColumns } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { userTable } from 'src/services/drizzle/schema';
 import { IUserRepo } from 'src/types/users/IUserRepo';
+import { GetUsersResult } from 'src/types/users/User';
+
+// Helper function to search users
+function searchUsers(search: string | undefined) {
+  if (!search) {
+    return undefined;
+  }
+
+  return or(
+    sql`similarity(${userTable.email}::text, ${search}::text) > 0.1`,
+    sql`similarity(${userTable.firstName}::text, ${search}::text) > 0.1`,
+    sql`similarity(${userTable.lastName}::text, ${search}::text) > 0.1`
+  );
+}
 
 export function getUserRepo(db: NodePgDatabase): IUserRepo {
   return {
@@ -36,6 +50,28 @@ export function getUserRepo(db: NodePgDatabase): IUserRepo {
 
     async deleteUser(id) {
       await db.delete(userTable).where(eq(userTable.id, id));
+    },
+    
+    async getUsers({ limit, offset, search }): Promise<GetUsersResult> {
+      // Get total count with search filter
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(userTable)
+        .where(searchUsers(search));
+      
+      // Get users with pagination and search
+      const users = await db
+        .select(getTableColumns(userTable))
+        .from(userTable)
+        .where(searchUsers(search))
+        .orderBy(userTable.createdAt)
+        .limit(limit)
+        .offset(offset);
+      
+      return {
+        users,
+        total
+      };
     }
   };
 }

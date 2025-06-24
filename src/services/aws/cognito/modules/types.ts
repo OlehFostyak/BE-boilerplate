@@ -58,3 +58,11 @@ export interface SetPasswordParams {
 export interface SetPasswordResult {
   success: boolean;
 }
+
+export interface DisableUserParams {
+  email: string;
+}
+
+export interface DisableUserResult {
+  success: boolean;
+}

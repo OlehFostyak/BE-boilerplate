@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ICommentRepo } from './ICommentRepo';
-import { UserProfileResponseSchema } from 'src/api/routes/schemas/user/ProfileSchema';
+import { UserProfileResponseSchema } from 'src/api/routes/schemas/user/UserSchema';
 
 export const CommentSchema = z.object({
   id: z.string().uuid(),
@@ -57,6 +57,7 @@ export type UpdateCommentByIdParams = {
   commentId: string;
   data: CommentUpdate;
   userId: string;
+  userRole?: string;
 };
 
 export type DeleteCommentByIdParams = {
@@ -64,4 +65,5 @@ export type DeleteCommentByIdParams = {
   commentId: string;
   userId: string;
   postOwnerId?: string;
+  userRole?: string;
 };

@@ -1,5 +1,4 @@
 import { HttpError } from 'src/api/errors/HttpError';
-import { ForbiddenError } from 'src/types/errors/ForbiddenError';
 import { UpdateCommentByIdParams } from 'src/types/comments/Comment';
 
 export async function updateCommentById(params: UpdateCommentByIdParams) {
@@ -10,9 +9,12 @@ export async function updateCommentById(params: UpdateCommentByIdParams) {
     throw new HttpError(404, 'Comment not found');
   }
 
-  // Check if the user is the owner of the comment
-  if (existingComment.user.id !== params.userId) {
-    throw new ForbiddenError('Permission denied: only comment author can update');
+  // Check if the user is the owner of the comment or an admin
+  const isCommentOwner = existingComment.user.id === params.userId;
+  const isAdmin = params.userRole === 'admin';
+  
+  if (!isCommentOwner && !isAdmin) {
+    throw new HttpError(403, 'Permission denied: only comment author or admin can update');
   }
 
   // Update the comment
