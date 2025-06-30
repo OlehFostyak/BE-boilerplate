@@ -4,6 +4,7 @@
 import { 
   AdminCreateUserCommand,
   AdminSetUserPasswordCommand,
+  AdminDisableUserCommand,
   GetUserCommand,
   AttributeType,
   UserNotFoundException,
@@ -16,6 +17,8 @@ import {
   AdminCreateUserResult, 
   SetPasswordParams, 
   SetPasswordResult,
+  DisableUserParams,
+  DisableUserResult,
   UserAttributes,
   CognitoUserPayload 
 } from './types';
@@ -74,10 +77,8 @@ export async function adminCreateUser(params: AdminCreateUserParams): Promise<Ad
     });
     
     // Return result with user's sub
-    return {
-      success: true,
-      userSub: response.User?.Attributes?.find(attr => attr.Name === 'sub')?.Value || ''
-    };
+    const subAttribute = response.User?.Attributes?.find(attr => attr.Name === 'sub');
+    return { success: true, userSub: subAttribute?.Value || '' };
   } catch (error) {
     console.error('Error creating user:', error);
     
@@ -117,6 +118,40 @@ export async function adminSetUserPassword(params: SetPasswordParams): Promise<S
     } else {
       const errorMessage = error instanceof Error ? error.message : 'Unknown';
       throw new Error(`Failed to set user password: ${errorMessage}`);
+    }
+  }
+}
+
+/**
+ * Gets user data by access token
+ * If token is valid, returns user data
+ * If token is invalid, throws an error
+ */
+/**
+ * Disables a user in Cognito (admin API)
+ */
+export async function adminDisableUser(params: DisableUserParams): Promise<DisableUserResult> {
+  const { email } = params;
+  console.log(`Disabling user: ${email}`);
+  
+  try {
+    await cognitoClient.send(
+      new AdminDisableUserCommand({
+        UserPoolId: cognitoConfig.userPoolId,
+        Username: email
+      })
+    );
+    
+    console.log('User disabled successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error disabling user:', error);
+    
+    if (error instanceof UserNotFoundException) {
+      throw new UserNotFoundError(`User with email ${email} not found`);
+    } else {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown';
+      throw new Error(`Failed to disable user: ${errorMessage}`);
     }
   }
 }

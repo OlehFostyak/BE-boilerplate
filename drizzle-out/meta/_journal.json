@@ -15,6 +15,20 @@
       "when": 1750683744957,
       "tag": "0001_youthful_shape",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750710396168,
+      "tag": "0002_lucky_hiroim",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1750731328267,
+      "tag": "0003_daily_yellowjacket",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import { UpdatePostReqSchema } from 'src/api/routes/schemas/posts/UpdatePostReqS
 import { getPostById } from 'src/controllers/post/get-post-by-id';
 import { updatePostById } from 'src/controllers/post/update-post-by-id';
 import { deletePostById } from 'src/controllers/post/delete-post-by-id';
+import { UserRole } from 'src/types/users/User';
 
 const getPostByIdRoute = {
   schema: {
@@ -50,13 +51,15 @@ const routes: FastifyPluginAsync = async function (f) {
     postRepo: fastify.repos.postRepo,
     postId: req.params.postId,
     data: req.body,
-    userId: req.userId as string // Передаємо userId з запиту
+    userId: req.userId as string,
+    userRole: req.userRole as UserRole
   }));
 
   fastify.delete('/', deletePostByIdRoute, async req => deletePostById({
     postRepo: fastify.repos.postRepo,
     postId: req.params.postId,
-    userId: req.userId as string // Передаємо userId з запиту
+    userId: req.userId as string,
+    userRole: req.userRole as UserRole
   }));
 };
 

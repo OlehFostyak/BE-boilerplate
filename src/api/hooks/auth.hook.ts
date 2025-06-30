@@ -2,11 +2,13 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { CognitoUserPayload, getUserByToken } from 'src/services/aws/cognito';
 import { UnauthorizedError } from 'src/types/errors/auth';
 import { getUserRepo } from 'src/repos/user.repo';
+import { UserRole } from 'src/types/users/User';
 
 declare module 'fastify' {
   interface FastifyRequest {
     user?: CognitoUserPayload;
     userId?: string;
+    userRole?: UserRole;
   }
 }
 
@@ -52,6 +54,7 @@ export async function authHook(
     
     request.user = cognitoUser;
     request.userId = dbUser.id;
+    request.userRole = dbUser.role as UserRole || 'user';
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return reply.status(401).send({ error: error.message });

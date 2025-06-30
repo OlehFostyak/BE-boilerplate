@@ -1,4 +1,4 @@
-import { uuid, pgTable, varchar, text, timestamp } from 'drizzle-orm/pg-core';
+import { uuid, pgTable, varchar, text, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { sql, relations } from 'drizzle-orm';
 
 export const userTable = pgTable('users', {
@@ -7,6 +7,8 @@ export const userTable = pgTable('users', {
   email: text('email').notNull().unique(),
   firstName: varchar({ length: 255 }).notNull(),
   lastName: varchar({ length: 255 }).notNull(),
+  role: varchar({ length: 50 }).default('user').notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp().defaultNow(),
   updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
 });

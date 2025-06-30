@@ -13,3 +13,9 @@ export const PaginationMetaSchema = z.object({
   page: z.number(),
   totalPages: z.number()
 });
+
+// Generic paginated response schema for any data type
+export const PaginatedResponseSchema = <T extends z.ZodType>(schema: T) => z.object({
+  data: z.array(schema),
+  meta: PaginationMetaSchema
+});

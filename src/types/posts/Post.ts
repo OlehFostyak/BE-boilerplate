@@ -3,7 +3,7 @@ import { IPostRepo } from './IPostRepo';
 import { PostSortField } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { SortOrder } from 'src/api/routes/schemas/SortSchema';
 import { CountOperator } from 'src/services/drizzle/utils/filtering';
-import { UserProfileResponseSchema } from 'src/api/routes/schemas/user/ProfileSchema';
+import { UserProfileResponseSchema } from 'src/api/routes/schemas/user/UserSchema';
 
 export const PostSchema = z.object({
   id: z.string().uuid(),
@@ -67,12 +67,14 @@ export type UpdatePostByIdParams = {
   postId: string;
   data: PostUpdate;
   userId: string;
+  userRole?: string;
 };
 
 export type DeletePostByIdParams = {
   postRepo: IPostRepo;
   postId: string;
   userId: string;
+  userRole?: string;
 };
 
 export type Post = z.infer<typeof PostSchema>;
