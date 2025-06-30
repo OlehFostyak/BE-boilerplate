@@ -3,14 +3,16 @@ import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { PaginationQuerySchema } from 'src/api/routes/schemas/PaginationSchema';
 import { getUsersAdmin } from '../../../controllers/admin/get-users-admin';
 import { deactivateUser } from '../../../controllers/admin/deactivate-user';
+import { activateUser } from '../../../controllers/admin/activate-user';
 import { getPaginatedResponse } from 'src/api/utils/pagination';
 import { adminOnly } from '../../hooks/adminOnly.hook';
 import { 
   GetUsersAdminRespSchema,
-  DeactivateUserReqSchema,
   DeactivateUserRespSchema,
+  ActivateUserRespSchema,
   ErrorResponseSchema,
-  UserSearchSchema
+  UserSearchSchema,
+  UserIdQuerySchema
 } from 'src/api/routes/schemas/admin/AdminSchema';
 
 const getUsersAdminRoute = {
@@ -24,7 +26,7 @@ const getUsersAdminRoute = {
   }
 };
 
-const deactivateUserRoute = {
+const userOperationRoute = {
   schema: {
     response: {
       200: DeactivateUserRespSchema,
@@ -32,7 +34,7 @@ const deactivateUserRoute = {
       404: ErrorResponseSchema,
       500: ErrorResponseSchema
     },
-    body: DeactivateUserReqSchema
+    params: UserIdQuerySchema
   }
 };
 
@@ -54,10 +56,19 @@ const routes: FastifyPluginAsync = async function (f) {
     return getPaginatedResponse(users, total, limit, offset);
   });
 
-  fastify.post('/users/deactivate', deactivateUserRoute, async (req) => {
-    const { userId } = req.body;
+  fastify.get('/users/:userId/deactivate', userOperationRoute, async (req) => {
+    const { userId } = req.params;
 
     return await deactivateUser({
+      userRepo: fastify.repos.userRepo,
+      userId
+    });
+  });
+
+  fastify.get('/users/:userId/activate', userOperationRoute, async (req) => {
+    const { userId } = req.params;
+
+    return await activateUser({
       userRepo: fastify.repos.userRepo,
       userId
     });

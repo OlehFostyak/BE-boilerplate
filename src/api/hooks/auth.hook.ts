@@ -52,7 +52,6 @@ export async function authHook(
       throw new UnauthorizedError('User not found in database');
     }
     
-    request.user = cognitoUser;
     request.userId = dbUser.id;
     request.userRole = dbUser.role as UserRole || 'user';
   } catch (error) {

@@ -25,8 +25,7 @@ export interface GetUsersAdminParams extends GetUsersParams {
   userRepo: IUserRepo;
 }
 
-export interface DeactivateUserParams {
+export interface UserOperationParams {
   userRepo: IUserRepo;
   userId: string;
 }
-    

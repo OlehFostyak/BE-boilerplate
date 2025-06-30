@@ -22,16 +22,20 @@ export const UserSearchSchema = z.object({
   search: z.string().optional()
 });
 
-// Request schema for deactivating a user
-export const DeactivateUserReqSchema = z.object({
+// Query schema for user operations with userId
+export const UserIdQuerySchema = z.object({
   userId: z.string()
 });
 
-// Response schema for deactivating a user
-export const DeactivateUserRespSchema = z.object({
+// Response schema for user operations
+export const UserOperationRespSchema = z.object({
   success: z.boolean(),
   message: z.string()
 });
+
+// Aliases for backward compatibility
+export const DeactivateUserRespSchema = UserOperationRespSchema;
+export const ActivateUserRespSchema = UserOperationRespSchema;
 
 // Error response schema
 export const ErrorResponseSchema = z.object({

@@ -66,3 +66,11 @@ export interface DisableUserParams {
 export interface DisableUserResult {
   success: boolean;
 }
+
+export interface EnableUserParams {
+  email: string;
+}
+
+export interface EnableUserResult {
+  success: boolean;
+}

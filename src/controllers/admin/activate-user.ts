@@ -1,8 +1,8 @@
-import { adminDisableUser } from 'src/services/aws/cognito/modules/user';
+import { adminEnableUser } from 'src/services/aws/cognito/modules/user';
 import { UserNotFoundError } from 'src/types/errors/auth';
 import { UserOperationParams } from 'src/types/users/User';
 
-export async function deactivateUser(params: UserOperationParams) {
+export async function activateUser(params: UserOperationParams) {
   const { userRepo, userId } = params;
 
   // Get user from database
@@ -12,21 +12,21 @@ export async function deactivateUser(params: UserOperationParams) {
   }
 
   try {
-    // Disable user in Cognito
-    await adminDisableUser({
+    // Enable user in Cognito
+    await adminEnableUser({
       email: user.email
     });
 
     // Update user status in database
-    await userRepo.updateUser(userId, { isActive: false });
+    await userRepo.updateUser(userId, { isActive: true });
 
     return {
       success: true,
-      message: `User ${user.email} has been deactivated`
+      message: `User ${user.email} has been activated`
     };
   } catch (error) {
-    console.error('Error deactivating user:', error);
+    console.error('Error activating user:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown';
-    throw new Error(`Failed to deactivate user: ${errorMessage}`);
+    throw new Error(`Failed to activate user: ${errorMessage}`);
   }
 }

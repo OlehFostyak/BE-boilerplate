@@ -5,6 +5,7 @@ import {
   AdminCreateUserCommand,
   AdminSetUserPasswordCommand,
   AdminDisableUserCommand,
+  AdminEnableUserCommand,
   GetUserCommand,
   AttributeType,
   UserNotFoundException,
@@ -19,6 +20,8 @@ import {
   SetPasswordResult,
   DisableUserParams,
   DisableUserResult,
+  EnableUserParams,
+  EnableUserResult,
   UserAttributes,
   CognitoUserPayload 
 } from './types';
@@ -52,7 +55,9 @@ function createAttributeList(email: string, userAttributes?: UserAttributes): At
 /**
  * Creates a new user (admin API)
  */
-export async function adminCreateUser(params: AdminCreateUserParams): Promise<AdminCreateUserResult> {
+export async function adminCreateUser(
+  params: AdminCreateUserParams
+): Promise<AdminCreateUserResult> {
   const { email, password, userAttributes } = params;
   console.log(`Creating user: ${email}`);
   
@@ -152,6 +157,35 @@ export async function adminDisableUser(params: DisableUserParams): Promise<Disab
     } else {
       const errorMessage = error instanceof Error ? error.message : 'Unknown';
       throw new Error(`Failed to disable user: ${errorMessage}`);
+    }
+  }
+}
+
+/**
+ * Enables a user in Cognito (admin API)
+ */
+export async function adminEnableUser(params: EnableUserParams): Promise<EnableUserResult> {
+  const { email } = params;
+  console.log(`Enabling user: ${email}`);
+  
+  try {
+    await cognitoClient.send(
+      new AdminEnableUserCommand({
+        UserPoolId: cognitoConfig.userPoolId,
+        Username: email
+      })
+    );
+    
+    console.log('User enabled successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error enabling user:', error);
+    
+    if (error instanceof UserNotFoundException) {
+      throw new UserNotFoundError(`User with email ${email} not found`);
+    } else {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown';
+      throw new Error(`Failed to enable user: ${errorMessage}`);
     }
   }
 }

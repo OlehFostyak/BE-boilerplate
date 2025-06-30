@@ -1,11 +1,10 @@
-import { FastifyPluginAsync, FastifyRequest } from 'fastify';
+import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { ErrorResponseSchema, UserProfileResponseSchema, getUserByIdRoute, getUserProfileRoute, GetUserByIdParams } from 'src/api/routes/schemas/user/UserSchema';
+import { getUserByIdRoute, getUserProfileRoute, GetUserByIdParams } from 'src/api/routes/schemas/user/UserSchema';
 import { UnauthorizedError } from 'src/types/errors/auth';
 import { getUserById } from 'src/controllers/user/get-user-by-id';
 import { IUserRepo } from 'src/types/users/IUserRepo';
-import { CognitoUserPayload } from 'src/services/aws/cognito';
-import { UserRole } from 'src/types/users/User';
+import { HttpError } from 'src/api/errors/HttpError';
 
 // Extend FastifyInstance with repos
 declare module 'fastify' {
@@ -19,24 +18,31 @@ declare module 'fastify' {
 
 // Using getUserProfileRoute imported from UserSchema.ts
 
-const routes: FastifyPluginAsync = async (fastify): Promise<void> => {
-  const typedFastify = fastify.withTypeProvider<ZodTypeProvider>();
+const routes: FastifyPluginAsync = async (f): Promise<void> => {
+  const fastify = f.withTypeProvider<ZodTypeProvider>();
 
-  typedFastify.get('/', getUserProfileRoute, async (request, reply) => {
-    if (!request.userId || !request.user?.email) {
+  fastify.get('/', getUserProfileRoute, async (request) => {
+    if (!request.userId) {
       throw new UnauthorizedError('User not authenticated');
     }
 
+    // Get the user from the database to ensure we have the correct data structure
+    const user = await fastify.repos.userRepo.getUserById(request.userId);
+    if (!user) {
+      throw new HttpError(404, 'User not found in database');
+    }
+
+    // Create the response object
     return {
-      id: request.userId,
-      email: request.user.email,
-      firstName: request.user.given_name || null,
-      lastName: request.user.family_name || null,
-      role: request.userRole
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      role: user.role
     };
   });
 
-  typedFastify.get('/:userId', getUserByIdRoute, async (request, reply) => {
+  fastify.get('/:userId', getUserByIdRoute, async (request) => {
     const { userId } = request.params as GetUserByIdParams;
     
     return await getUserById({
