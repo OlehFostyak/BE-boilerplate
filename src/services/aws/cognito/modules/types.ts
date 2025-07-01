@@ -74,3 +74,15 @@ export interface EnableUserParams {
 export interface EnableUserResult {
   success: boolean;
 }
+
+// Get user status
+export interface GetUserStatusParams {
+  email: string;
+}
+
+export interface GetUserStatusResult {
+  success: boolean;
+  status?: string;
+  enabled?: boolean;
+  error?: string;
+}

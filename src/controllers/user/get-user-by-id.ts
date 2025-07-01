@@ -15,6 +15,7 @@ export interface GetUserByIdParams {
 export async function getUserById(params: GetUserByIdParams) {
   const { userRepo, userId } = params;
 
+  // getUserById now includes Cognito status
   const user = await userRepo.getUserById(userId);
   if (!user) {
     throw new HttpError(404, `User with ID ${userId} not found`);
@@ -25,6 +26,8 @@ export async function getUserById(params: GetUserByIdParams) {
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
-    role: user.role
+    role: user.role,
+    status: user.status,
+    enabled: user.enabled
   };
 }

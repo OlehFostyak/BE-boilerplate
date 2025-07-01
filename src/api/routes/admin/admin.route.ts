@@ -4,6 +4,8 @@ import { PaginationQuerySchema } from 'src/api/routes/schemas/PaginationSchema';
 import { getUsersAdmin } from '../../../controllers/admin/get-users-admin';
 import { deactivateUser } from '../../../controllers/admin/deactivate-user';
 import { activateUser } from '../../../controllers/admin/activate-user';
+import { inviteUser } from '../../../controllers/admin/invite-user';
+import { resendInvite } from '../../../controllers/admin/resend-invite';
 import { getPaginatedResponse } from 'src/api/utils/pagination';
 import { adminOnly } from '../../hooks/adminOnly.hook';
 import { 
@@ -14,6 +16,12 @@ import {
   UserSearchSchema,
   UserIdQuerySchema
 } from 'src/api/routes/schemas/admin/AdminSchema';
+import {
+  InviteUserReqSchema,
+  InviteUserRespSchema,
+  ResendInviteParamsSchema,
+  ResendInviteRespSchema
+} from 'src/api/routes/schemas/admin/InviteUserSchema';
 
 const getUsersAdminRoute = {
   schema: {
@@ -35,6 +43,30 @@ const userOperationRoute = {
       500: ErrorResponseSchema
     },
     params: UserIdQuerySchema
+  }
+};
+
+const inviteUserRoute = {
+  schema: {
+    body: InviteUserReqSchema,
+    response: {
+      200: InviteUserRespSchema,
+      400: ErrorResponseSchema,
+      401: ErrorResponseSchema,
+      500: ErrorResponseSchema
+    }
+  }
+};
+
+const resendInviteRoute = {
+  schema: {
+    response: {
+      200: ResendInviteRespSchema,
+      401: ErrorResponseSchema,
+      404: ErrorResponseSchema,
+      500: ErrorResponseSchema
+    },
+    params: ResendInviteParamsSchema
   }
 };
 
@@ -69,6 +101,26 @@ const routes: FastifyPluginAsync = async function (f) {
     const { userId } = req.params;
 
     return await activateUser({
+      userRepo: fastify.repos.userRepo,
+      userId
+    });
+  });
+
+  // Invite a new user
+  fastify.post('/users/invite', inviteUserRoute, async (req) => {
+    const { email } = req.body;
+
+    return await inviteUser({
+      userRepo: fastify.repos.userRepo,
+      email
+    });
+  });
+
+  // Resend invitation to a user
+  fastify.get('/users/invite/:userId/resend', resendInviteRoute, async (req) => {
+    const { userId } = req.params;
+
+    return await resendInvite({
       userRepo: fastify.repos.userRepo,
       userId
     });

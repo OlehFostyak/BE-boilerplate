@@ -16,10 +16,7 @@ export async function deactivateUser(params: UserOperationParams) {
     await adminDisableUser({
       email: user.email
     });
-
-    // Update user status in database
-    await userRepo.updateUser(userId, { isActive: false });
-
+    
     return {
       success: true,
       message: `User ${user.email} has been deactivated`

@@ -6,6 +6,7 @@ import {
   AdminSetUserPasswordCommand,
   AdminDisableUserCommand,
   AdminEnableUserCommand,
+  AdminGetUserCommand,
   GetUserCommand,
   AttributeType,
   UserNotFoundException,
@@ -22,6 +23,8 @@ import {
   DisableUserResult,
   EnableUserParams,
   EnableUserResult,
+  GetUserStatusParams,
+  GetUserStatusResult,
   UserAttributes,
   CognitoUserPayload 
 } from './types';
@@ -29,6 +32,7 @@ import {
   UserNotFoundError,
   UserAlreadyExistsError
 } from 'src/types/errors/auth';
+import { randomUUID } from 'crypto';
 
 /**
  * Converts user attributes object to AttributeType array for AWS SDK
@@ -80,6 +84,41 @@ export async function adminCreateUser(
       password,
       permanent: true
     });
+    
+    // Return result with user's sub
+    const subAttribute = response.User?.Attributes?.find(attr => attr.Name === 'sub');
+    return { success: true, userSub: subAttribute?.Value || '' };
+  } catch (error) {
+    console.error('Error creating user:', error);
+    
+    if (error instanceof UsernameExistsException) {
+      throw new UserAlreadyExistsError(`User with email ${email} already exists`);
+    } else {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown';
+      throw new Error(`Failed to create user: ${errorMessage}`);
+    }
+  }
+}
+
+/**
+ * Creates a new user without setting a permanent password (admin API)
+ * This is useful for invitation flows where the user will set their own password later
+ */
+export async function adminCreateUserWithoutPassword(
+  email: string
+): Promise<AdminCreateUserResult> {
+  console.log(`Creating user without permanent password: ${email}`);
+  
+  try {
+    const response = await cognitoClient.send(
+      new AdminCreateUserCommand({
+        UserPoolId: cognitoConfig.userPoolId,
+        Username: email,
+        MessageAction: 'SUPPRESS'
+      })
+    );
+    
+    console.log('User created successfully (without permanent password)');
     
     // Return result with user's sub
     const subAttribute = response.User?.Attributes?.find(attr => attr.Name === 'sub');
@@ -186,6 +225,46 @@ export async function adminEnableUser(params: EnableUserParams): Promise<EnableU
     } else {
       const errorMessage = error instanceof Error ? error.message : 'Unknown';
       throw new Error(`Failed to enable user: ${errorMessage}`);
+    }
+  }
+}
+
+/**
+ * Gets user status from Cognito
+ * @param params Parameters containing the user's email
+ * @returns User status information
+ */
+export async function getUserStatus(params: GetUserStatusParams): Promise<GetUserStatusResult> {
+  const { email } = params;
+  console.log(`Getting status for user: ${email}`);
+  
+  try {
+    const response = await cognitoClient.send(
+      new AdminGetUserCommand({
+        UserPoolId: cognitoConfig.userPoolId,
+        Username: email
+      })
+    );
+    
+    return {
+      success: true,
+      status: response.UserStatus,
+      enabled: response.Enabled
+    };
+  } catch (error) {
+    console.error('Error getting user status:', error);
+    
+    if (error instanceof UserNotFoundException) {
+      return {
+        success: false,
+        error: `User with email ${email} not found`
+      };
+    } else {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown';
+      return {
+        success: false,
+        error: `Failed to get user status: ${errorMessage}`
+      };
     }
   }
 }

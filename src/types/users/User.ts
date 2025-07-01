@@ -1,18 +1,15 @@
 import { GetUsersParams, IUserRepo } from './IUserRepo';
+import { userTable } from 'src/services/drizzle/schema';
 
 export type UserRole = 'admin' | 'user';
 
 // User object from database
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  cognitoId: string;
-  role: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  isActive: boolean;
+export type User = typeof userTable.$inferSelect;
+
+// User with Cognito status
+export interface UserWithStatus extends User {
+  status?: string;
+  enabled?: boolean;
 }
 
 // Result type for getting users with pagination

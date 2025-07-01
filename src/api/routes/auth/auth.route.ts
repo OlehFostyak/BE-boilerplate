@@ -2,8 +2,14 @@ import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { register } from 'src/controllers/auth/register';
 import { login } from 'src/controllers/auth/login';
+import { acceptInvite } from 'src/controllers/user/accept-invite';
 import { RegisterResponseSchema, RegisterRequestSchema } from 'src/api/routes/schemas/auth/RegisterSchema';
 import { LoginResponseSchema, LoginRequestSchema } from 'src/api/routes/schemas/auth/LoginSchema';
+import {
+  AcceptInviteReqSchema,
+  AcceptInviteRespSchema,
+  ErrorResponseSchema
+} from 'src/api/routes/schemas/admin/InviteUserSchema';
 
 const registerRoute = {
   schema: {
@@ -29,6 +35,20 @@ const loginRoute = {
   }
 };
 
+const acceptInviteRoute = {
+  schema: {
+    body: AcceptInviteReqSchema,
+    response: {
+      200: AcceptInviteRespSchema,
+      400: ErrorResponseSchema,
+      500: ErrorResponseSchema
+    }
+  },
+  config: {
+    skipAuthHook: true // Skip authentication for this route
+  }
+};
+
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
 
@@ -48,6 +68,21 @@ const routes: FastifyPluginAsync = async function (f) {
     return login({
       email,
       password
+    });
+  });
+
+  // Accept invitation and complete registration
+  fastify.post('/accept-invite', acceptInviteRoute, async (req) => {
+    const { email, firstName, lastName, password, expireAt, signature } = req.body;
+
+    return await acceptInvite({
+      userRepo: fastify.repos.userRepo,
+      email,
+      firstName,
+      lastName,
+      password,
+      expireAt,
+      signature
     });
   });
 };

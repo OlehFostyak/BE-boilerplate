@@ -8,7 +8,6 @@ export const userTable = pgTable('users', {
   firstName: varchar({ length: 255 }).notNull(),
   lastName: varchar({ length: 255 }).notNull(),
   role: varchar({ length: 50 }).default('user').notNull(),
-  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp().defaultNow(),
   updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
 });

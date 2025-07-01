@@ -10,8 +10,10 @@ export const AdminUserSchema = z.object({
   cognitoId: z.string(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
-  isActive: z.boolean(),
-  role: z.string()
+  role: z.string(),
+  // Cognito status fields
+  status: z.string().optional(),
+  enabled: z.boolean().optional()
 });
 
 // Response schema for getting users

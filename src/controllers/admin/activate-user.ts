@@ -17,8 +17,8 @@ export async function activateUser(params: UserOperationParams) {
       email: user.email
     });
 
-    // Update user status in database
-    await userRepo.updateUser(userId, { isActive: true });
+    // Note: User status is managed by Cognito
+    // No need to update any status in the database
 
     return {
       success: true,
