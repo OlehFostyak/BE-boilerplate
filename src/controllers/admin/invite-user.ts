@@ -18,10 +18,7 @@ async function sendUserInvitation(email: string): Promise<{ success: boolean; me
     const inviteUrl = `${process.env.FRONTEND_URL}/accept-invite?email=${encodeURIComponent(email)}&expireAt=${encodeURIComponent(expireAt)}&signature=${encodeURIComponent(signature)}`;
     
     // Send invitation email
-    await sendInviteEmail({
-      email,
-      inviteUrl
-    });
+    await sendInviteEmail(email, inviteUrl);
     
     return {
       success: true,
