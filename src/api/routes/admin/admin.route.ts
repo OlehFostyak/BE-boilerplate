@@ -1,17 +1,15 @@
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { PaginationQuerySchema } from 'src/api/routes/schemas/PaginationSchema';
-import { getUsersAdmin } from '../../../controllers/admin/get-users-admin';
-import { deactivateUser } from '../../../controllers/admin/deactivate-user';
-import { activateUser } from '../../../controllers/admin/activate-user';
-import { inviteUser } from '../../../controllers/admin/invite-user';
-import { resendInvite } from '../../../controllers/admin/resend-invite';
+import { getUsersAdmin } from 'src/controllers/admin/get-users-admin';
+import { deactivateUser } from 'src/controllers/admin/deactivate-user';
+import { activateUser } from 'src/controllers/admin/activate-user';
+import { inviteUser, resendInvite } from 'src/controllers/admin/invite-user';
 import { getPaginatedResponse } from 'src/api/utils/pagination';
-import { adminOnly } from '../../hooks/adminOnly.hook';
+import { adminOnly } from 'src/api/hooks/adminOnly.hook';
 import { 
   GetUsersAdminRespSchema,
   DeactivateUserRespSchema,
-  ActivateUserRespSchema,
   ErrorResponseSchema,
   UserSearchSchema,
   UserIdQuerySchema

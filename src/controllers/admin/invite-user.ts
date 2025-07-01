@@ -1,18 +1,39 @@
-import { IUserRepo } from 'src/types/users/IUserRepo';
-import { adminCreateUserWithoutPassword } from 'src/services/aws/cognito/modules/user';
+import { UserInviteResult, InviteUserParams, ResendInviteParams } from 'src/types/users/User';
+import { adminCreateUserWithoutPassword, getUserStatus } from 'src/services/aws/cognito/modules/user';
 import { generateSignature } from 'src/services/aws/kms/modules/signature';
 import { sendInviteEmail } from 'src/services/sendgrid/modules/email';
-import { randomUUID } from 'crypto';
 
-interface InviteUserParams {
-  userRepo: IUserRepo;
-  email: string;
-}
-
-interface InviteUserResult {
-  success: boolean;
-  message: string;
-  userId?: string;
+/**
+ * Helper function to send user invitation
+ * - Generates signature with expiration
+ * - Creates invite URL
+ * - Sends email
+ */
+async function sendUserInvitation(email: string): Promise<{ success: boolean; message: string }> {
+  try {
+    // Generate signature with expiration date
+    const { signature, expireAt } = await generateSignature(email);
+    
+    // Create invite URL
+    const inviteUrl = `${process.env.FRONTEND_URL}/accept-invite?email=${encodeURIComponent(email)}&expireAt=${encodeURIComponent(expireAt)}&signature=${encodeURIComponent(signature)}`;
+    
+    // Send invitation email
+    await sendInviteEmail({
+      email,
+      inviteUrl
+    });
+    
+    return {
+      success: true,
+      message: `Invitation sent to ${email}`
+    };
+  } catch (error) {
+    console.error('Error sending invitation:', error);
+    return {
+      success: false,
+      message: `Failed to send invitation: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
 }
 
 /**
@@ -21,7 +42,7 @@ interface InviteUserResult {
  * - Creates user in database
  * - Sends invitation email with signup link
  */
-export async function inviteUser(params: InviteUserParams): Promise<InviteUserResult> {
+export async function inviteUser(params: InviteUserParams): Promise<UserInviteResult> {
   const { userRepo, email } = params;
   
   try {
@@ -52,28 +73,79 @@ export async function inviteUser(params: InviteUserParams): Promise<InviteUserRe
       cognitoId: cognitoResult.userSub
     });
     
-    // Generate signature with expiration date
-    const { signature, expireAt } = await generateSignature(email);
-    
-    // Create invite URL
-    const inviteUrl = `${process.env.FRONTEND_URL}/accept-invite?email=${encodeURIComponent(email)}&expireAt=${encodeURIComponent(expireAt)}&signature=${encodeURIComponent(signature)}`;
-    
     // Send invitation email
-    await sendInviteEmail({
-      email,
-      inviteUrl
-    });
+    const inviteResult = await sendUserInvitation(email);
     
-    return {
-      success: true,
-      message: `Invitation sent to ${email}`,
-      userId: newUser.id
-    };
+    if (inviteResult.success) {
+      return {
+        success: true,
+        message: `Invitation sent to ${email}`,
+        userId: newUser.id
+      };
+    } else {
+      throw new Error(inviteResult.message);
+    }
   } catch (error) {
     console.error('Error inviting user:', error);
     return {
       success: false,
       message: `Failed to invite user: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
+
+/**
+ * Resend invitation to a user
+ * - Generates new signature and expiration
+ * - Sends new invitation email
+ */
+export async function resendInvite(params: ResendInviteParams): Promise<UserInviteResult> {
+  const { userRepo, userId } = params;
+  
+  try {
+    // Get user from database
+    const user = await userRepo.getUserById(userId);
+    
+    if (!user) {
+      return {
+        success: false,
+        message: `User with ID ${userId} not found`
+      };
+    }
+    
+    // Check user status in Cognito
+    const userStatus = await getUserStatus({ email: user.email });
+    if (!userStatus.success) {
+      return {
+        success: false,
+        message: `Failed to get status for user ${user.email}: ${userStatus.error}`
+      };
+    }
+    
+    // Only resend invite if user is in FORCE_CHANGE_PASSWORD status
+    if (userStatus.status !== 'FORCE_CHANGE_PASSWORD') {
+      return {
+        success: false,
+        message: `Cannot resend invite to user ${user.email} with status ${userStatus.status}`
+      };
+    }
+    
+    // Send invitation email
+    const inviteResult = await sendUserInvitation(user.email);
+    
+    if (inviteResult.success) {
+      return {
+        success: true,
+        message: `Invitation resent to ${user.email}`
+      };
+    } else {
+      throw new Error(inviteResult.message);
+    }  
+  } catch (error) {
+    console.error('Error resending invitation:', error);
+    return {
+      success: false,
+      message: `Failed to resend invitation: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
   }
 }

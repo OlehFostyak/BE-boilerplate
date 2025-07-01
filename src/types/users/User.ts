@@ -26,3 +26,22 @@ export interface UserOperationParams {
   userRepo: IUserRepo;
   userId: string;
 }
+
+// Common result interface for user invite operations
+export interface UserInviteResult {
+  success: boolean;
+  message: string;
+  userId?: string;
+}
+
+// Invite new user params
+export interface InviteUserParams {
+  userRepo: IUserRepo;
+  email: string;
+}
+
+// Resend invite params
+export interface ResendInviteParams {
+  userRepo: IUserRepo;
+  userId: string;
+}
