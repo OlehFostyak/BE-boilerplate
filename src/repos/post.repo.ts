@@ -15,8 +15,8 @@ function searchPosts(search: string | undefined) {
   }
 
   return or(
-    sql`similarity(${postTable.title}::text, ${search}::text) > 0.1`,
-    sql`similarity(${postTable.description}::text, ${search}::text) > 0.1`
+    sql`similarity(${postTable.title}::text, ${search}::text) > 0.3`,
+    sql`similarity(${postTable.description}::text, ${search}::text) > 0.3`
   );
 }
 

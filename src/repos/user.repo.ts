@@ -12,9 +12,9 @@ function searchUsers(search: string | undefined) {
   }
 
   return or(
-    sql`similarity(${userTable.email}::text, ${search}::text) > 0.1`,
-    sql`similarity(${userTable.firstName}::text, ${search}::text) > 0.1`,
-    sql`similarity(${userTable.lastName}::text, ${search}::text) > 0.1`
+    sql`similarity(${userTable.email}::text, ${search}::text) > 0.3`,
+    sql`similarity(${userTable.firstName}::text, ${search}::text) > 0.3`,
+    sql`similarity(${userTable.lastName}::text, ${search}::text) > 0.3`
   );
 }
 
