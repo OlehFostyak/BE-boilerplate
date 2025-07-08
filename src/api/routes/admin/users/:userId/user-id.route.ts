@@ -1,11 +1,7 @@
 import { z } from 'zod';
 import { FastifyPluginAsync } from 'fastify';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { adminOnly } from 'src/api/hooks/adminOnly.hook';
-import { 
-  DeactivateUserRespSchema,
-  ErrorResponseSchema
-} from 'src/api/routes/schemas/admin/AdminSchema';
+import { ApiResponseSchema, ErrorResponseSchema } from 'src/api/routes/schemas/common/ResponseSchema';
 import {
   ResendInviteRespSchema
 } from 'src/api/routes/schemas/admin/InviteUserSchema';
@@ -19,8 +15,8 @@ const userOperationRoute = {
       userId: z.string().uuid()
     }),
     response: {
-      200: DeactivateUserRespSchema,
-      401: ErrorResponseSchema,
+      200: ApiResponseSchema,
+      400: ErrorResponseSchema,
       404: ErrorResponseSchema,
       500: ErrorResponseSchema
     }
@@ -34,7 +30,6 @@ const resendInviteRoute = {
     }),
     response: {
       200: ResendInviteRespSchema,
-      401: ErrorResponseSchema,
       404: ErrorResponseSchema,
       500: ErrorResponseSchema
     }

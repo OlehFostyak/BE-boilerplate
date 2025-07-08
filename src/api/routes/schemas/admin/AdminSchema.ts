@@ -28,20 +28,3 @@ export const UserSearchSchema = z.object({
 export const UserIdQuerySchema = z.object({
   userId: z.string()
 });
-
-// Response schema for user operations
-export const UserOperationRespSchema = z.object({
-  success: z.boolean(),
-  message: z.string()
-});
-
-// Aliases for backward compatibility
-export const DeactivateUserRespSchema = UserOperationRespSchema;
-export const ActivateUserRespSchema = UserOperationRespSchema;
-
-// Error response schema
-export const ErrorResponseSchema = z.object({
-  statusCode: z.number(),
-  error: z.string(),
-  message: z.string()
-});

@@ -1,7 +1,5 @@
 import { z } from 'zod';
-
-// Re-export ErrorResponseSchema for use in other modules
-export { ErrorResponseSchema } from './AdminSchema';
+import { EErrorCodes } from 'src/api/errors/EErrorCodes';
 
 // Schema for invite user request
 export const InviteUserReqSchema = z.object({
@@ -11,8 +9,8 @@ export const InviteUserReqSchema = z.object({
 // Schema for invite user response
 export const InviteUserRespSchema = z.object({
   success: z.boolean(),
-  message: z.string(),
-  userId: z.string().optional()
+  errorCode: z.nativeEnum(EErrorCodes).optional(),
+  userId: z.string().uuid().optional()
 });
 
 // Schema for resend invitation request params
@@ -23,7 +21,7 @@ export const ResendInviteParamsSchema = z.object({
 // Schema for resend invitation response
 export const ResendInviteRespSchema = z.object({
   success: z.boolean(),
-  message: z.string()
+  errorCode: z.nativeEnum(EErrorCodes).optional()
 });
 
 // Schema for accept invite request
@@ -39,5 +37,5 @@ export const AcceptInviteReqSchema = z.object({
 // Schema for accept invite response
 export const AcceptInviteRespSchema = z.object({
   success: z.boolean(),
-  message: z.string()
+  errorCode: z.nativeEnum(EErrorCodes).optional()
 });

@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { HttpError } from './HttpError';
 import util from 'util';
 import { EErrorCodes } from './EErrorCodes';
+
 import {
   AuthError,
   InvalidCredentialsError,
@@ -77,8 +78,8 @@ export const errorHandler = function (
   }
 
   return reply.status(statusCode).send({
-    code: errorCode,
-    message,
-    ...isProduction ? {} : { info: util.inspect(error) }
+    success: false,
+    errorCode,
+    ...isProduction ? {} : { debug: { message, info: util.inspect(error) } }
   });
 };

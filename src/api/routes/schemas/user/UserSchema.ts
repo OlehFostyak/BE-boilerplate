@@ -24,7 +24,6 @@ export const getUserProfileRoute = {
   schema: {
     response: {
       200: UserProfileResponseSchema,
-      401: ErrorResponseSchema,
       500: ErrorResponseSchema
     }
   }

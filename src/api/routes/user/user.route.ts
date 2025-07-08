@@ -5,6 +5,7 @@ import { UnauthorizedError } from 'src/types/errors/auth';
 import { getUserById } from 'src/controllers/user/get-user-by-id';
 import { IUserRepo } from 'src/types/users/IUserRepo';
 import { HttpError } from 'src/api/errors/HttpError';
+import { EErrorCodes } from 'src/api/errors/EErrorCodes';
 
 // Extend FastifyInstance with repos
 declare module 'fastify' {
@@ -29,7 +30,11 @@ const routes: FastifyPluginAsync = async (f): Promise<void> => {
     // Get the user from the database to ensure we have the correct data structure
     const user = await fastify.repos.userRepo.getUserById(request.userId);
     if (!user) {
-      throw new HttpError(404, 'User not found in database');
+      throw new HttpError({
+        statusCode: 404,
+        message: 'User not found in database',
+        errorCode: EErrorCodes.USER_NOT_FOUND
+      });
     }
 
     // Create the response object

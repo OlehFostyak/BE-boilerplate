@@ -1,5 +1,6 @@
 import { GetUsersParams, IUserRepo } from './IUserRepo';
 import { userTable } from 'src/services/drizzle/schema';
+import { EErrorCodes } from 'src/api/errors/EErrorCodes';
 
 export type UserRole = 'admin' | 'user';
 
@@ -30,7 +31,7 @@ export interface UserOperationParams {
 // Common result interface for user invite operations
 export interface UserInviteResult {
   success: boolean;
-  message: string;
+  errorCode?: EErrorCodes;
   userId?: string;
 }
 

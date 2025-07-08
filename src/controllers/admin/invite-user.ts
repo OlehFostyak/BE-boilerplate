@@ -2,6 +2,8 @@ import { UserInviteResult, InviteUserParams, ResendInviteParams } from 'src/type
 import { adminCreateUserWithoutPassword, getUserStatus } from 'src/services/aws/cognito/modules/user';
 import { generateSignature } from 'src/services/aws/kms/modules/signature';
 import { sendInviteEmail } from 'src/services/sendgrid/modules/email';
+import { EErrorCodes } from 'src/api/errors/EErrorCodes';
+import { HttpError } from 'src/api/errors/HttpError';
 
 /**
  * Helper function to send user invitation
@@ -9,7 +11,7 @@ import { sendInviteEmail } from 'src/services/sendgrid/modules/email';
  * - Creates invite URL
  * - Sends email
  */
-async function sendUserInvitation(email: string): Promise<{ success: boolean; message: string }> {
+async function sendUserInvitation(email: string): Promise<{ success: boolean; errorCode?: EErrorCodes }> {
   try {
     // Generate signature with expiration date
     const { signature, expireAt } = await generateSignature(email);
@@ -21,15 +23,15 @@ async function sendUserInvitation(email: string): Promise<{ success: boolean; me
     await sendInviteEmail(email, inviteUrl);
     
     return {
-      success: true,
-      message: `Invitation sent to ${email}`
+      success: true
     };
   } catch (error) {
     console.error('Error sending invitation:', error);
-    return {
-      success: false,
-      message: `Failed to send invitation: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
+    throw new HttpError({
+      statusCode: 400,
+      cause: error,
+      errorCode: EErrorCodes.GENERAL_ERROR
+    });
   }
 }
 
@@ -39,27 +41,27 @@ async function sendUserInvitation(email: string): Promise<{ success: boolean; me
  * - Creates user in database
  * - Sends invitation email with signup link
  */
-export async function inviteUser(params: InviteUserParams): Promise<UserInviteResult> {
+export async function inviteUser(params: InviteUserParams): Promise<{ success: true; userId: string }> {
   const { userRepo, email } = params;
   
   try {
     // Check if user already exists
     const existingUser = await userRepo.getUserByEmail(email);
     if (existingUser) {
-      return {
-        success: false,
-        message: `User with email ${email} already exists`
-      };
+      throw new HttpError({
+      statusCode: 409,
+      errorCode: EErrorCodes.USER_ALREADY_EXISTS
+    });
     }
 
     // Create user in Cognito without setting permanent password
     const cognitoResult = await adminCreateUserWithoutPassword(email);
     
     if (!cognitoResult.success || !cognitoResult.userSub) {
-      return {
-        success: false,
-        message: 'Failed to create user in Cognito'
-      };
+      throw new HttpError({
+      statusCode: 400,
+      errorCode: EErrorCodes.GENERAL_ERROR
+    });
     }
     
     // Create user in database
@@ -76,18 +78,21 @@ export async function inviteUser(params: InviteUserParams): Promise<UserInviteRe
     if (inviteResult.success) {
       return {
         success: true,
-        message: `Invitation sent to ${email}`,
         userId: newUser.id
       };
     } else {
-      throw new Error(inviteResult.message);
+      throw new HttpError({
+      statusCode: 422,
+      errorCode: inviteResult.errorCode || EErrorCodes.GENERAL_ERROR
+    });
     }
   } catch (error) {
     console.error('Error inviting user:', error);
-    return {
-      success: false,
-      message: `Failed to invite user: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
+    throw new HttpError({
+      statusCode: 400,
+      cause: error,
+      errorCode: EErrorCodes.USER_INVITE_FAILED
+    });
   }
 }
 
@@ -96,7 +101,7 @@ export async function inviteUser(params: InviteUserParams): Promise<UserInviteRe
  * - Generates new signature and expiration
  * - Sends new invitation email
  */
-export async function resendInvite(params: ResendInviteParams): Promise<UserInviteResult> {
+export async function resendInvite(params: ResendInviteParams): Promise<{ success: true }> {
   const { userRepo, userId } = params;
   
   try {
@@ -104,27 +109,27 @@ export async function resendInvite(params: ResendInviteParams): Promise<UserInvi
     const user = await userRepo.getUserById(userId);
     
     if (!user) {
-      return {
-        success: false,
-        message: `User with ID ${userId} not found`
-      };
+      throw new HttpError({
+      statusCode: 404,
+      errorCode: EErrorCodes.USER_NOT_FOUND
+    });
     }
     
     // Check user status in Cognito
     const userStatus = await getUserStatus({ email: user.email });
     if (!userStatus.success) {
-      return {
-        success: false,
-        message: `Failed to get status for user ${user.email}: ${userStatus.error}`
-      };
+      throw new HttpError({
+        statusCode: 400,
+        errorCode: EErrorCodes.GENERAL_ERROR
+      });
     }
     
     // Only resend invite if user is in FORCE_CHANGE_PASSWORD status
     if (userStatus.status !== 'FORCE_CHANGE_PASSWORD') {
-      return {
-        success: false,
-        message: `Cannot resend invite to user ${user.email} with status ${userStatus.status}`
-      };
+      throw new HttpError({
+        statusCode: 400,
+        errorCode: EErrorCodes.USER_INVALID_STATUS
+      });
     }
     
     // Send invitation email
@@ -132,17 +137,21 @@ export async function resendInvite(params: ResendInviteParams): Promise<UserInvi
     
     if (inviteResult.success) {
       return {
-        success: true,
-        message: `Invitation resent to ${user.email}`
+        success: true
       };
     } else {
-      throw new Error(inviteResult.message);
+      throw new HttpError({
+        statusCode: 422,
+        message: 'Failed to send invitation email',
+        errorCode: inviteResult.errorCode || EErrorCodes.GENERAL_ERROR
+      });
     }  
   } catch (error) {
     console.error('Error resending invitation:', error);
-    return {
-      success: false,
-      message: `Failed to resend invitation: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
+    throw new HttpError({
+      statusCode: 400,
+      cause: error,
+      errorCode: EErrorCodes.USER_INVITE_RESEND_FAILED
+    });
   }
 }

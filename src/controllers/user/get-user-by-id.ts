@@ -1,5 +1,6 @@
 import { IUserRepo } from 'src/types/users/IUserRepo';
 import { HttpError } from 'src/api/errors/HttpError';
+import { EErrorCodes } from 'src/api/errors/EErrorCodes';
 
 export interface GetUserByIdParams {
   userRepo: IUserRepo;
@@ -18,7 +19,11 @@ export async function getUserById(params: GetUserByIdParams) {
   // getUserById now includes Cognito status
   const user = await userRepo.getUserById(userId);
   if (!user) {
-    throw new HttpError(404, `User with ID ${userId} not found`);
+    throw new HttpError({
+      statusCode: 404,
+      message: `User with ID ${userId} not found`,
+      errorCode: EErrorCodes.USER_NOT_FOUND
+    });
   }
 
   return {

@@ -6,9 +6,9 @@ import { inviteUser } from 'src/controllers/admin/invite-user';
 import { getPaginatedResponse } from 'src/api/utils/pagination';
 import { 
   GetUsersAdminRespSchema,
-  ErrorResponseSchema,
   UserSearchSchema
 } from 'src/api/routes/schemas/admin/AdminSchema';
+import { ErrorResponseSchema } from 'src/api/routes/schemas/common/ResponseSchema';
 import {
   InviteUserReqSchema,
   InviteUserRespSchema
@@ -18,7 +18,6 @@ const getUsersAdminRoute = {
   schema: {
     response: {
       200: GetUsersAdminRespSchema,
-      401: ErrorResponseSchema,
       500: ErrorResponseSchema
     },
     querystring: PaginationQuerySchema.merge(UserSearchSchema)
@@ -31,7 +30,6 @@ const inviteUserRoute = {
     response: {
       200: InviteUserRespSchema,
       400: ErrorResponseSchema,
-      401: ErrorResponseSchema,
       500: ErrorResponseSchema
     }
   }

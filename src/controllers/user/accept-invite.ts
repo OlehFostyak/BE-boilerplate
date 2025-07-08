@@ -1,6 +1,8 @@
 import { IUserRepo } from 'src/types/users/IUserRepo';
 import { adminSetUserPassword, getUserStatus } from 'src/services/aws/cognito/modules/user';
 import { verifySignature } from 'src/services/aws/kms/modules/signature';
+import { EErrorCodes } from 'src/api/errors/EErrorCodes';
+import { HttpError } from 'src/api/errors/HttpError';
 
 interface AcceptInviteParams {
   userRepo: IUserRepo;
@@ -12,11 +14,6 @@ interface AcceptInviteParams {
   signature: string;
 }
 
-interface AcceptInviteResult {
-  success: boolean;
-  message: string;
-}
-
 /**
  * Accept an invitation and complete user registration
  * - Verifies signature
@@ -24,7 +21,7 @@ interface AcceptInviteResult {
  * - Sets user password in Cognito
  * - Activates user
  */
-export async function acceptInvite(params: AcceptInviteParams): Promise<AcceptInviteResult> {
+export async function acceptInvite(params: AcceptInviteParams): Promise<{ success: true }> {
   const { userRepo, email, firstName, lastName, password, expireAt, signature } = params;
   
   try {
@@ -35,10 +32,10 @@ export async function acceptInvite(params: AcceptInviteParams): Promise<AcceptIn
     );
     
     if (!isSignatureValid) {
-      return {
-        success: false,
-        message: 'Invalid signature'
-      };
+      throw new HttpError({
+      statusCode: 400,
+      errorCode: EErrorCodes.INVALID_TOKEN
+    });
     }
     
     // Check if invitation has expired
@@ -46,29 +43,36 @@ export async function acceptInvite(params: AcceptInviteParams): Promise<AcceptIn
     const currentDate = new Date();
     
     if (currentDate > expireDate) {
-      return {
-        success: false,
-        message: 'Invitation has expired'
-      };
+      throw new HttpError({
+      statusCode: 400,
+      errorCode: EErrorCodes.EXPIRED_TOKEN
+    });
     }
     
     // Get user from database
     const user = await userRepo.getUserByEmail(email);
     
     if (!user) {
-      return {
-        success: false,
-        message: `User with email ${email} not found`
-      };
+      throw new HttpError({
+      statusCode: 404,
+      errorCode: EErrorCodes.USER_NOT_FOUND
+    });
     }
     
     // Check if user is already active in Cognito
     const userStatus = await getUserStatus({ email });
+    if (!userStatus.success) {
+      throw new HttpError({
+      statusCode: 500,
+      errorCode: EErrorCodes.GENERAL_ERROR
+    });
+    }
+    
     if (userStatus.success && userStatus.status !== 'FORCE_CHANGE_PASSWORD') {
-      return {
-        success: false,
-        message: 'User is already active or in an invalid state'
-      };
+      throw new HttpError({
+      statusCode: 400,
+      errorCode: EErrorCodes.USER_INVALID_STATUS
+    });
     }
     
     // Set password in Cognito
@@ -85,14 +89,14 @@ export async function acceptInvite(params: AcceptInviteParams): Promise<AcceptIn
     });
     
     return {
-      success: true,
-      message: 'Registration completed successfully'
+      success: true
     };
   } catch (error) {
     console.error('Error accepting invitation:', error);
-    return {
-      success: false,
-      message: `Failed to accept invitation: ${error instanceof Error ? error.message : 'Unknown error'}`
-    };
+    throw new HttpError({
+      statusCode: 400,
+      cause: error,
+      errorCode: EErrorCodes.USER_ACTIVATION_FAILED
+    });
   }
 }

@@ -1,6 +1,7 @@
 import { adminCreateUser } from 'src/services/aws/cognito';
-import { BadRequestError } from 'src/types/errors/auth';
 import { IUserRepo } from 'src/types/users/IUserRepo';
+import { EErrorCodes } from 'src/api/errors/EErrorCodes';
+import { HttpError } from 'src/api/errors/HttpError';
 
 export interface RegisterParams {
   email: string;
@@ -10,7 +11,7 @@ export interface RegisterParams {
   userRepo: IUserRepo;
 }
 
-export async function register({ email, password, firstName, lastName, userRepo }: RegisterParams) {
+export async function register({ email, password, firstName, lastName, userRepo }: RegisterParams): Promise<{ success: boolean; userId?: string }> {
   try {
     const result = await adminCreateUser({
       email,
@@ -21,22 +22,31 @@ export async function register({ email, password, firstName, lastName, userRepo 
       }
     });
 
-    if (result.userSub) {
+    if (result.success) {
       try {
-        await userRepo.createUser({
+        const user = await userRepo.createUser({
           cognitoId: result.userSub,
           email,
           firstName,
           lastName
         });
+        
+        return {
+          success: true,
+          userId: user.id
+        };
       } catch (dbError: any) {
         console.error('Error creating user in database:', dbError);
       }
     }
-
-    return { message: 'User registered successfully.', success: true };
+    
+    return { success: false };
   } catch (error: any) {
     console.error('Registration error:', error);
-    throw new BadRequestError(error.message || 'Registration failed');
+    throw new HttpError({
+      statusCode: 400,
+      cause: error,
+      errorCode: EErrorCodes.USER_CREATION_FAILED
+    });
   }
 }

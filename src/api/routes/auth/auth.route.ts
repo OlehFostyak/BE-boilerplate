@@ -7,9 +7,9 @@ import { RegisterResponseSchema, RegisterRequestSchema } from 'src/api/routes/sc
 import { LoginResponseSchema, LoginRequestSchema } from 'src/api/routes/schemas/auth/LoginSchema';
 import {
   AcceptInviteReqSchema,
-  AcceptInviteRespSchema,
-  ErrorResponseSchema
+  AcceptInviteRespSchema
 } from 'src/api/routes/schemas/admin/InviteUserSchema';
+import { ErrorResponseSchema } from 'src/api/routes/schemas/common/ResponseSchema';
 
 const registerRoute = {
   schema: {
