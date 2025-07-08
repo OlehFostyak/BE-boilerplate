@@ -15,6 +15,7 @@ import responseTime from './plugins/response-time.plugin';
 import healthCheck from './plugins/health-check.plugin';
 import routePrinter from './plugins/route-printer.plugin';
 import { authHook } from './hooks/auth.hook';
+import { adminOnly } from './hooks/adminOnly.hook';
 import { setupSwagger } from './plugins/swagger.plugin';
 import { getLoggerOptions } from './plugins/logger.plugin';
 import { getDb, dbHealthCheck } from 'src/services/drizzle/drizzle.service';
@@ -111,6 +112,14 @@ async function run() {
       return;
     }
     return authHook(request, reply);
+  });
+  
+  // Register admin-only hook for admin routes
+  server.addHook('onRequest', async (request) => {
+    // Apply adminOnly hook only to admin routes
+    if (request.url.startsWith('/api/admin')) {
+      return adminOnly(request);
+    }
   });
 
   // load routes
