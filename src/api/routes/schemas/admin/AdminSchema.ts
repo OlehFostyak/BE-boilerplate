@@ -7,7 +7,6 @@ export const AdminUserSchema = z.object({
   email: z.string().email(),
   firstName: z.string().nullable(),
   lastName: z.string().nullable(),
-  cognitoId: z.string(),
   createdAt: z.date().nullable(),
   updatedAt: z.date().nullable(),
   role: z.string(),
