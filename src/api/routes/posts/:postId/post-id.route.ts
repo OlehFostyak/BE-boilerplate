@@ -49,14 +49,17 @@ const routes: FastifyPluginAsync = async function (f) {
 
   fastify.patch('/', updatePostByIdRoute, async req => updatePostById({
     postRepo: fastify.repos.postRepo,
+    tagRepo: fastify.repos.tagRepo,
     postId: req.params.postId,
     data: req.body,
     userId: req.userId as string,
-    userRole: req.userRole as UserRole
+    userRole: req.userRole as UserRole,
+    tagIds: req.body.tagIds
   }));
 
   fastify.delete('/', deletePostByIdRoute, async req => deletePostById({
     postRepo: fastify.repos.postRepo,
+    tagRepo: fastify.repos.tagRepo,
     postId: req.params.postId,
     userId: req.userId as string,
     userRole: req.userRole as UserRole

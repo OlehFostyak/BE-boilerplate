@@ -30,6 +30,21 @@ export const commentTable = pgTable('comments', {
   updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
 });
 
+export const tagTable = pgTable('tags', {
+  id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
+  name: varchar({ length: 50 }).notNull().unique(),
+  description: text(),
+  createdAt: timestamp().defaultNow(),
+  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+});
+
+export const postTagTable = pgTable('post_tags', {
+  id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
+  postId: uuid().references(() => postTable.id, { onDelete: 'cascade' }).notNull(),
+  tagId: uuid().references(() => tagTable.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp().defaultNow()
+});
+
 export const userRelations = relations(userTable, ({ many }) => ({
   posts: many(postTable),
   comments: many(commentTable)
@@ -37,6 +52,7 @@ export const userRelations = relations(userTable, ({ many }) => ({
 
 export const postRelations = relations(postTable, ({ many, one }) => ({
   comments: many(commentTable),
+  tags: many(postTagTable),
   user: one(userTable, {
     fields: [postTable.userId],
     references: [userTable.id]
@@ -51,5 +67,20 @@ export const commentRelations = relations(commentTable, ({ one }) => ({
   user: one(userTable, {
     fields: [commentTable.userId],
     references: [userTable.id]
+  })
+}));
+
+export const tagRelations = relations(tagTable, ({ many }) => ({
+  posts: many(postTagTable)
+}));
+
+export const postTagRelations = relations(postTagTable, ({ one }) => ({
+  post: one(postTable, {
+    fields: [postTagTable.postId],
+    references: [postTable.id]
+  }),
+  tag: one(tagTable, {
+    fields: [postTagTable.tagId],
+    references: [tagTable.id]
   })
 }));

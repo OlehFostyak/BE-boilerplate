@@ -4,6 +4,8 @@ import { PostSortField } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { SortOrder } from 'src/api/routes/schemas/SortSchema';
 import { CountOperator } from 'src/services/drizzle/utils/filtering';
 import { UserProfileResponseSchema } from 'src/api/routes/schemas/user/UserSchema';
+import { TagSchema } from '../tags/Tag';
+import { ITagRepo } from '../tags/ITagRepo';
 
 export const PostSchema = z.object({
   id: z.string().uuid(),
@@ -11,6 +13,7 @@ export const PostSchema = z.object({
   description: z.string().optional().nullable(),
   user: UserProfileResponseSchema,
   commentsCount: z.number().optional(),
+  tags: z.array(TagSchema).optional(),
   updatedAt: z.date(),
   createdAt: z.date()
 });
@@ -46,6 +49,7 @@ export type GetPostsRepoParams = {
   sortOrder?: SortOrder;
   commentsCountOperator?: CountOperator;
   commentsCountValue?: number;
+  tagIds?: string[];
 };
 
 export type GetPostsParams = {
@@ -59,19 +63,24 @@ export type GetPostByIdParams = {
 
 export type CreatePostParams = {
   postRepo: IPostRepo;
+  tagRepo: ITagRepo;
   data: PostInsert;
+  tagIds?: string[];
 };
 
 export type UpdatePostByIdParams = {
   postRepo: IPostRepo;
+  tagRepo: ITagRepo;
   postId: string;
   data: PostUpdate;
   userId: string;
   userRole?: string;
+  tagIds?: string[];
 };
 
 export type DeletePostByIdParams = {
   postRepo: IPostRepo;
+  tagRepo: ITagRepo;
   postId: string;
   userId: string;
   userRole?: string;

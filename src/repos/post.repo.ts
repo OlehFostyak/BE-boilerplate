@@ -2,7 +2,7 @@ import { eq, count, getTableColumns, or, sql, and } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IPostRepo } from 'src/types/posts/IPostRepo';
 import { GetPostsResult, PostSchema } from 'src/types/posts/Post';
-import { postTable, commentTable, userTable } from 'src/services/drizzle/schema';
+import { postTable, commentTable, userTable, postTagTable, tagTable } from 'src/services/drizzle/schema';
 import { PostSortField } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { createSortBuilder } from 'src/services/drizzle/utils/sorting';
 import { CountOperator, createCountFilter } from 'src/services/drizzle/utils/filtering';
@@ -39,6 +39,18 @@ function getCommentsCountCondition(
   );
 }
 
+function getTagsCondition(tagIds: string[] | undefined) {
+  if (!tagIds || tagIds.length === 0) {
+    return undefined;
+  }
+
+  return sql`EXISTS (
+    SELECT 1 FROM ${postTagTable}
+    WHERE ${postTagTable.postId} = ${postTable.id}
+    AND ${postTagTable.tagId} IN ${tagIds}
+  )`;
+}
+
 function sortPosts(sortBy: PostSortField, sortOrder?: SortOrder) {
   const sortFunction = createSortBuilder<PostSortField>({
     title: (direction) => direction(postTable.title),
@@ -58,19 +70,22 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       sortBy,
       sortOrder,
       commentsCountOperator,
-      commentsCountValue
+      commentsCountValue,
+      tagIds
     }): Promise<GetPostsResult> {
-      // Create comments count filter condition
+      // Create filter conditions
       const commentsCountCondition = getCommentsCountCondition(
         commentsCountOperator,
         commentsCountValue,
         db
       );
+      
+      const tagsCondition = getTagsCondition(tagIds);
 
       const [{ total }] = await db
         .select({ total: count() })
         .from(postTable)
-        .where(and(searchPosts(search), commentsCountCondition));
+        .where(and(searchPosts(search), commentsCountCondition, tagsCondition));
 
       const posts = await db
         .select({
@@ -81,14 +96,34 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
         .leftJoin(userTable, eq(userTable.id, postTable.userId))
-        .where(and(searchPosts(search), commentsCountCondition))
+        .where(and(searchPosts(search), commentsCountCondition, tagsCondition))
         .groupBy(postTable.id, userTable.id)
         .orderBy(sortPosts(sortBy, sortOrder))
         .limit(limit)
         .offset(offset);
+        
+      // Get tags for each post
+      const postsWithTags = await Promise.all(
+        posts.map(async (post) => {
+          const tags = await db
+            .select({
+              ...getTableColumns(tagTable),
+              postsCount: count(postTagTable.id)
+            })
+            .from(tagTable)
+            .innerJoin(postTagTable, eq(postTagTable.tagId, tagTable.id))
+            .where(eq(postTagTable.postId, post.id))
+            .groupBy(tagTable.id);
+            
+          return {
+            ...post,
+            tags
+          };
+        })
+      );
 
       return {
-        posts: posts.map(post => PostSchema.parse(post)),
+        posts: postsWithTags.map(post => PostSchema.parse(post)),
         total
       };
     },
@@ -105,7 +140,28 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .leftJoin(userTable, eq(userTable.id, postTable.userId))
         .where(eq(postTable.id, id))
         .groupBy(postTable.id, userTable.id);
-      return post.length > 0 ? PostSchema.parse(post[0]) : null;
+        
+      if (post.length === 0) {
+        return null;
+      }
+      
+      // Get tags for the post
+      const tags = await db
+        .select({
+          ...getTableColumns(tagTable),
+          postsCount: count(postTagTable.id)
+        })
+        .from(tagTable)
+        .innerJoin(postTagTable, eq(postTagTable.tagId, tagTable.id))
+        .where(eq(postTagTable.postId, id))
+        .groupBy(tagTable.id);
+        
+      const postWithTags = {
+        ...post[0],
+        tags
+      };
+        
+      return PostSchema.parse(postWithTags);
     },
 
     async createPost(data) {

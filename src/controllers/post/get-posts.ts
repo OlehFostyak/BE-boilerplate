@@ -8,6 +8,7 @@ export async function getPosts(params: GetPostsParams) {
     sortBy: params.sortBy,
     sortOrder: params.sortOrder,
     commentsCountOperator: params.commentsCountOperator,
-    commentsCountValue: params.commentsCountValue
+    commentsCountValue: params.commentsCountValue,
+    tagIds: params.tagIds
   });
 }
