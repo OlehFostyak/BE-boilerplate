@@ -25,14 +25,26 @@ export async function updatePostById(params: UpdatePostByIdParams) {
   }
 
   // Update the post
-  const post = await params.postRepo.updatePostById(params.postId, params.data);
+  await params.postRepo.updatePostById(params.postId, params.data);
+  
+  // Update tags if tagRepo and tagIds are provided
+  if (params.tagIds?.length) {
+    // Remove existing tags first
+    await params.tagRepo.removeTagsFromPost(params.postId);
+    
+    // Add new tags if any are provided
+    await params.tagRepo.addTagsToPost(params.postId, params.tagIds);
+  }
 
-  if (!post) {
+  // Get the updated post with tags
+  const updatedPost = await params.postRepo.getPostById(params.postId);
+
+  if (!updatedPost) {
     throw new HttpError({
-      statusCode: 500,
-      errorCode: EErrorCodes.GENERAL_ERROR
+      statusCode: 404,
+      errorCode: EErrorCodes.POST_NOT_FOUND
     });
   }
 
-  return post;
+  return updatedPost;
 }

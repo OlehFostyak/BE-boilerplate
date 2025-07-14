@@ -6,6 +6,7 @@ import { GetPostsRespSchema } from 'src/api/routes/schemas/posts/GetPostsRespSch
 import { PaginationQuerySchema } from 'src/api/routes/schemas/PaginationSchema';
 import { PostsSortSchema } from 'src/api/routes/schemas/posts/PostsSortSchema';
 import { CommentsCountFilterSchema } from 'src/api/routes/schemas/posts/CommentsCountFilterSchema';
+import { TagsFilterSchema } from 'src/api/routes/schemas/posts/TagsFilterSchema';
 import { getPaginatedResponse } from 'src/api/utils/pagination';
 import { createPost } from 'src/controllers/post/create-post';
 import { getPosts } from 'src/controllers/post/get-posts';
@@ -24,7 +25,7 @@ const getPostsRoute = {
     response: {
       200: GetPostsRespSchema
     },
-    querystring: PaginationQuerySchema.merge(PostsSortSchema).merge(CommentsCountFilterSchema)
+    querystring: PaginationQuerySchema.merge(PostsSortSchema).merge(CommentsCountFilterSchema).merge(TagsFilterSchema)
   }
 };
 
@@ -33,7 +34,9 @@ const routes: FastifyPluginAsync = async function (f) {
 
   fastify.post('/', createPostRoute, async (req) => createPost({
     postRepo: fastify.repos.postRepo,
-    data: { ...req.body, userId: req.userId as string }
+    tagRepo: fastify.repos.tagRepo,
+    data: { ...req.body, userId: req.userId as string },
+    tagIds: req.body.tagIds
   }));
 
   fastify.get('/', getPostsRoute, async (req) => {
@@ -44,7 +47,8 @@ const routes: FastifyPluginAsync = async function (f) {
       sortBy,
       sortOrder,
       commentsCountOperator,
-      commentsCountValue
+      commentsCountValue,
+      tagIds
     } = req.query;
 
     const { posts, total } = await getPosts({
@@ -55,7 +59,8 @@ const routes: FastifyPluginAsync = async function (f) {
       sortBy,
       sortOrder,
       commentsCountOperator,
-      commentsCountValue
+      commentsCountValue,
+      tagIds
     });
 
     return getPaginatedResponse(posts, total, limit, offset);

@@ -14,7 +14,9 @@
     "db:migration:generate": "npx drizzle-kit generate",
     "db:migration:studio": "npx drizzle-kit studio",
     "seed:posts": "ts-node src/seeds/posts/create-posts.ts",
-    "seed:comments": "ts-node src/seeds/comments/create-comments.ts"
+    "seed:comments": "ts-node src/seeds/comments/create-comments.ts",
+    "seed:tags": "ts-node src/seeds/tags/create-tags.ts",
+    "seed:post-tags": "ts-node src/seeds/tags/assign-tags-to-posts.ts"
   },
   "keywords": [],
   "author": "",

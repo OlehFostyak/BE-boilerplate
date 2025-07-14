@@ -26,14 +26,18 @@ export async function deletePostById(params: DeletePostByIdParams) {
     });
   }
 
+  // Remove tag associations
+  await params.tagRepo.removeTagsFromPost(params.postId);
+  
   // Delete the post
   const post = await params.postRepo.deletePostById(params.postId);
 
   if (!post) {
     throw new HttpError({
-      statusCode: 500,
-      message: 'Failed to delete post',
-      errorCode: EErrorCodes.GENERAL_ERROR
+      statusCode: 404,
+      errorCode: EErrorCodes.POST_NOT_FOUND
     });
   }
+  
+  return post;
 }
