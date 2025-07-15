@@ -183,7 +183,7 @@ export function getArchiveRepo(db: NodePgDatabase): IArchiveRepo {
 
     async archivePostById(id) {
       return await db.transaction(async (tx) => {
-        // 1. Get the post with user information
+        // Get the post with user information
         const post = await tx
           .select({
             ...getTableColumns(postTable),
@@ -197,7 +197,7 @@ export function getArchiveRepo(db: NodePgDatabase): IArchiveRepo {
           return null;
         }
 
-        // 2. Get comments for the post
+        // Get comments for the post
         const comments = await tx
           .select({
             ...getTableColumns(commentTable),
@@ -207,23 +207,18 @@ export function getArchiveRepo(db: NodePgDatabase): IArchiveRepo {
           .leftJoin(userTable, eq(userTable.id, commentTable.userId))
           .where(eq(commentTable.postId, id));
           
-        // 3. Get tags for the post
-        const postTags = await tx
+        // Get tags for the post
+        const tags = await tx
           .select({
-            tagId: tagTable.id,
-            tag: {
-              id: tagTable.id,
-              name: tagTable.name,
-              description: tagTable.description,
-              createdAt: tagTable.createdAt,
-              updatedAt: tagTable.updatedAt
-            }
+            ...getTableColumns(tagTable),
+            postsCount: count(postTagTable.id)
           })
-          .from(postTagTable)
-          .leftJoin(tagTable, eq(postTagTable.tagId, tagTable.id))
-          .where(eq(postTagTable.postId, id));
+          .from(tagTable)
+          .innerJoin(postTagTable, eq(postTagTable.tagId, tagTable.id))
+          .where(eq(postTagTable.postId, id))
+          .groupBy(tagTable.id);
 
-        // 4. Archive the post
+        // Archive the post
         const [archivedPost] = await tx.insert(archivedPostTable).values({
           originalId: post[0].id,
           title: post[0].title,
@@ -233,22 +228,20 @@ export function getArchiveRepo(db: NodePgDatabase): IArchiveRepo {
           updatedAt: post[0].updatedAt
         }).returning();
         
-        // 5. Create archived post tags
-        if (postTags.length > 0) {
-          await tx.insert(archivedPostTagTable).values(
-            postTags
-              .filter(({ tag }) => tag !== null)
-              .map(({ tag }) => ({
-                archivedPostId: archivedPost.id,
-                tagId: tag!.id
-              }))
-          );
+        // Create archived post tags
+        if (tags.length > 0) {
+          const archivedPostTagValues = tags.map(tag => ({
+            archivedPostId: archivedPost.id,
+            tagId: tag.id
+          }));
+          
+          await tx.insert(archivedPostTagTable).values(archivedPostTagValues);
         }
 
-        // 6. Archive comments
+        // Archive comments
         if (comments.length > 0) {
           const archivedCommentValues = comments.map(comment => ({
-            originalId: comment.id, // Original comment ID
+            originalId: comment.id,
             text: comment.text,
             postId: archivedPost.id,
             userId: comment.userId,
@@ -259,7 +252,7 @@ export function getArchiveRepo(db: NodePgDatabase): IArchiveRepo {
           await tx.insert(archivedCommentTable).values(archivedCommentValues);
         }
 
-        // 6. Delete the original post (cascades delete for comments and post-tag relationships)
+        // 7. Delete the original post (cascades delete for comments and post-tag relationships)
         await tx.delete(postTable).where(eq(postTable.id, id));
 
         // 8. Return the archived post with user information
@@ -267,7 +260,7 @@ export function getArchiveRepo(db: NodePgDatabase): IArchiveRepo {
           ...archivedPost,
           user: post[0].user,
           commentsCount: comments.length,
-          tags: postTags.map(({ tag }) => tag)
+          tags
         };
         
         // Parse through the schema to ensure correct type

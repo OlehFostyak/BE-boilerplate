@@ -26,9 +26,6 @@ export async function archivePostById(params: ArchivePostByIdParams) {
     });
   }
 
-  // Remove tag associations
-  await params.tagRepo.removeTagsFromPost(params.postId);
-  
   // Archive the post
   const archivedPost = await params.archiveRepo.archivePostById(params.postId);
 
@@ -38,6 +35,6 @@ export async function archivePostById(params: ArchivePostByIdParams) {
       errorCode: EErrorCodes.POST_NOT_FOUND
     });
   }
-  
+
   return archivedPost;
 }
