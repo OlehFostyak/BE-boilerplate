@@ -1,0 +1,1 @@
+ALTER TABLE "archived_posts" ADD COLUMN "tags" json DEFAULT '[]'::jsonb;

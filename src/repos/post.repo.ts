@@ -1,4 +1,4 @@
-import { eq, count, getTableColumns, or, sql, and } from 'drizzle-orm';
+import { eq, count, getTableColumns, or, sql, and, isNull } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { IPostRepo } from 'src/types/posts/IPostRepo';
 import { GetPostsResult, PostSchema } from 'src/types/posts/Post';
@@ -85,7 +85,12 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       const [{ total }] = await db
         .select({ total: count() })
         .from(postTable)
-        .where(and(searchPosts(search), commentsCountCondition, tagsCondition));
+        .where(and(
+          searchPosts(search),
+          commentsCountCondition,
+          tagsCondition,
+          isNull(postTable.deletedAt)
+        ));
 
       const posts = await db
         .select({
@@ -96,7 +101,12 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
         .leftJoin(userTable, eq(userTable.id, postTable.userId))
-        .where(and(searchPosts(search), commentsCountCondition, tagsCondition))
+        .where(and(
+          searchPosts(search),
+          commentsCountCondition,
+          tagsCondition,
+          isNull(postTable.deletedAt)
+        ))
         .groupBy(postTable.id, userTable.id)
         .orderBy(sortPosts(sortBy, sortOrder))
         .limit(limit)
@@ -138,7 +148,12 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         .from(postTable)
         .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
         .leftJoin(userTable, eq(userTable.id, postTable.userId))
-        .where(eq(postTable.id, id))
+        .where(
+          and(
+            eq(postTable.id, id),
+            isNull(postTable.deletedAt)
+          )
+        )
         .groupBy(postTable.id, userTable.id);
         
       if (post.length === 0) {
@@ -198,7 +213,7 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
     },
 
     async deletePostById(id) {
-      // Get post with user information before deleting
+      // Get post with user information before soft deleting
       const post = await db
         .select({
           ...getTableColumns(postTable),
@@ -212,7 +227,11 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
         return null;
       }
       
-      await db.delete(postTable).where(eq(postTable.id, id));
+      // Soft delete by setting deletedAt to current timestamp
+      await db
+        .update(postTable)
+        .set({ deletedAt: new Date() })
+        .where(eq(postTable.id, id));
       
       return PostSchema.parse(post[0]);
     }

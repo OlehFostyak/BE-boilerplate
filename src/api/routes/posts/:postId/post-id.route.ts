@@ -7,6 +7,7 @@ import { getPostById } from 'src/controllers/post/get-post-by-id';
 import { updatePostById } from 'src/controllers/post/update-post-by-id';
 import { deletePostById } from 'src/controllers/post/delete-post-by-id';
 import { UserRole } from 'src/types/users/User';
+import { archivePostById } from 'src/controllers/post/archive-post-by-id';
 
 const getPostByIdRoute = {
   schema: {
@@ -39,6 +40,14 @@ const deletePostByIdRoute = {
   }
 };
 
+const archivePostByIdRoute = {
+  schema: {
+    params: z.object({
+      postId: z.string().uuid()
+    })
+  }
+};
+
 const routes: FastifyPluginAsync = async function (f) {
   const fastify = f.withTypeProvider<ZodTypeProvider>();
 
@@ -60,6 +69,15 @@ const routes: FastifyPluginAsync = async function (f) {
   fastify.delete('/', deletePostByIdRoute, async req => deletePostById({
     postRepo: fastify.repos.postRepo,
     tagRepo: fastify.repos.tagRepo,
+    postId: req.params.postId,
+    userId: req.userId as string,
+    userRole: req.userRole as UserRole
+  }));
+
+  fastify.delete('/archive', archivePostByIdRoute, async req => archivePostById({
+    postRepo: fastify.repos.postRepo,
+    tagRepo: fastify.repos.tagRepo,
+    archiveRepo: fastify.repos.archiveRepo,
     postId: req.params.postId,
     userId: req.userId as string,
     userRole: req.userRole as UserRole

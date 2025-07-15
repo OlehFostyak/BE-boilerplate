@@ -3,13 +3,15 @@ import { getPostRepo } from './post.repo';
 import { getCommentRepo } from './comment.repo';
 import { getUserRepo } from './user.repo';
 import { getTagRepo } from './tag.repo';
+import { getArchiveRepo } from './archive.repo';
 
 export function getRepos(db: NodePgDatabase) {
   return {
     postRepo: getPostRepo(db),
     commentRepo: getCommentRepo(db),
     userRepo: getUserRepo(db),
-    tagRepo: getTagRepo(db)
+    tagRepo: getTagRepo(db),
+    archiveRepo: getArchiveRepo(db)
   };
 }
 

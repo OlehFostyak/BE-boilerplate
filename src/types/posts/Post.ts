@@ -6,6 +6,7 @@ import { CountOperator } from 'src/services/drizzle/utils/filtering';
 import { UserProfileResponseSchema } from 'src/api/routes/schemas/user/UserSchema';
 import { TagSchema } from '../tags/Tag';
 import { ITagRepo } from '../tags/ITagRepo';
+import { IArchiveRepo } from '../archive/IArchiveRepo';
 
 export const PostSchema = z.object({
   id: z.string().uuid(),
@@ -81,6 +82,15 @@ export type UpdatePostByIdParams = {
 export type DeletePostByIdParams = {
   postRepo: IPostRepo;
   tagRepo: ITagRepo;
+  postId: string;
+  userId: string;
+  userRole?: string;
+};
+
+export type ArchivePostByIdParams = {
+  postRepo: IPostRepo;
+  tagRepo: ITagRepo;
+  archiveRepo: IArchiveRepo;
   postId: string;
   userId: string;
   userRole?: string;

@@ -43,6 +43,41 @@
       "when": 1752066650447,
       "tag": "0005_old_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1752516547824,
+      "tag": "0006_stale_reptil",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1752534146283,
+      "tag": "0007_lethal_bloodscream",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1752568310735,
+      "tag": "0008_bizarre_sharon_ventura",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1752568558541,
+      "tag": "0009_busy_giant_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1752569223503,
+      "tag": "0010_lethal_donald_blake",
+      "breakpoints": true
     }
   ]
 }
