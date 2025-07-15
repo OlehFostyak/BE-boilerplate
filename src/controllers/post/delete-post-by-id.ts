@@ -26,9 +26,6 @@ export async function deletePostById(params: DeletePostByIdParams) {
     });
   }
 
-  // Remove tag associations
-  await params.tagRepo.removeTagsFromPost(params.postId);
-  
   // Delete the post
   const post = await params.postRepo.deletePostById(params.postId);
 
