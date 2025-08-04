@@ -1,4 +1,4 @@
-import { uuid, pgTable, varchar, text, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { uuid, pgTable, varchar, text, timestamp, jsonb } from 'drizzle-orm/pg-core';
 import { sql, relations } from 'drizzle-orm';
 
 export const userTable = pgTable('users', {
@@ -8,8 +8,8 @@ export const userTable = pgTable('users', {
   firstName: varchar({ length: 255 }).notNull(),
   lastName: varchar({ length: 255 }).notNull(),
   role: varchar({ length: 50 }).default('user').notNull(),
-  createdAt: timestamp().defaultNow(),
-  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+  createdAt: timestamp({ mode: 'date' }).defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).defaultNow().$onUpdate(() => new Date())
 });
 
 export const postTable = pgTable('posts', {
@@ -17,8 +17,8 @@ export const postTable = pgTable('posts', {
   title: varchar({ length: 255 }).notNull(),
   description: text(),
   userId: uuid().references(() => userTable.id, { onDelete: 'cascade' }).notNull(),
-  createdAt: timestamp().defaultNow(),
-  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+  createdAt: timestamp({ mode: 'date' }).defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).defaultNow().$onUpdate(() => new Date())
 });
 
 export const commentTable = pgTable('comments', {
@@ -26,23 +26,23 @@ export const commentTable = pgTable('comments', {
   text: text().notNull(),
   postId: uuid().references(() => postTable.id, { onDelete: 'cascade' }).notNull(),
   userId: uuid().references(() => userTable.id, { onDelete: 'cascade' }).notNull(),
-  createdAt: timestamp().defaultNow(),
-  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+  createdAt: timestamp({ mode: 'date' }).defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).defaultNow().$onUpdate(() => new Date())
 });
 
 export const tagTable = pgTable('tags', {
   id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
   name: varchar({ length: 50 }).notNull().unique(),
   description: text(),
-  createdAt: timestamp().defaultNow(),
-  updatedAt: timestamp().defaultNow().$onUpdate(() => new Date())
+  createdAt: timestamp({ mode: 'date' }).defaultNow(),
+  updatedAt: timestamp({ mode: 'date' }).defaultNow().$onUpdate(() => new Date())
 });
 
 export const postTagTable = pgTable('post_tags', {
   id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
   postId: uuid().references(() => postTable.id, { onDelete: 'cascade' }).notNull(),
   tagId: uuid().references(() => tagTable.id, { onDelete: 'cascade' }).notNull(),
-  createdAt: timestamp().defaultNow()
+  createdAt: timestamp({ mode: 'date' }).defaultNow()
 });
 
 export const userRelations = relations(userTable, ({ many }) => ({
@@ -84,3 +84,14 @@ export const postTagRelations = relations(postTagTable, ({ one }) => ({
     references: [tagTable.id]
   })
 }));
+
+export const archivedUsersTable = pgTable('archived_users', {
+  id: uuid().primaryKey().default(sql`uuid_generate_v4()`),
+  originalUserId: uuid('original_user_id').notNull(),
+  userData: jsonb('user_data').notNull(),
+  postsData: jsonb('posts_data'),
+  commentsOnPostsData: jsonb('comments_on_posts_data'),
+  userCommentsData: jsonb('user_comments_data'),
+  archivedAt: timestamp('archived_at', { mode: 'date' }).defaultNow(),
+  archivedBy: uuid('archived_by').notNull()
+});

@@ -21,7 +21,7 @@ function searchUsers(search: string | undefined) {
 export function getUserRepo(db: NodePgDatabase): IUserRepo {
   // Helper function to add Cognito status to a user
   async function addCognitoStatusToUser(user: any): Promise<UserWithStatus | undefined> {
-    if (!user) return undefined;
+    if (!user) {return undefined;}
     
     try {
       const statusResult = await getUserStatus({ email: user.email });

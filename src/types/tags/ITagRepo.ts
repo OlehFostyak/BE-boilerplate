@@ -3,6 +3,7 @@ import { Tag, CreateTagData, UpdateTagData, GetTagsParams, GetTagsResult } from 
 export interface ITagRepo {
   getTags(params: GetTagsParams): Promise<GetTagsResult>;
   getTagById(id: string): Promise<Tag | null>;
+  getTagByName(name: string): Promise<Tag | null>;
   createTag(data: CreateTagData): Promise<Tag>;
   updateTagById(id: string, data: UpdateTagData): Promise<Tag | null>;
   deleteTagById(id: string): Promise<Tag | null>;
