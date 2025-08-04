@@ -1,6 +1,5 @@
 import { IArchivedUserRepo } from 'src/types/archived-users/IArchivedUserRepo';
 import { IUserRepo } from 'src/types/users/IUserRepo';
-import { IPostRepo } from 'src/types/posts/IPostRepo';
 import { ICommentRepo } from 'src/types/comments/ICommentRepo';
 import { ITransactionManager } from 'src/types/ITransaction';
 import { EErrorCodes } from 'src/api/errors/EErrorCodes';
@@ -14,7 +13,7 @@ export interface ArchiveUserParams {
   transactionManager: ITransactionManager;
 }
 
-// Helper function to validate user can be archived
+// Validate user can be archived
 async function validateUserForArchiving(
   userId: string,
   archivedUserRepo: IArchivedUserRepo,
@@ -41,23 +40,7 @@ async function validateUserForArchiving(
   return user;
 }
 
-// Helper function to collect user's posts
-async function getUserPosts(userId: string, postRepo: IPostRepo) {
-  const userPostsResult = await postRepo.getPosts({
-    limit: 10000,
-    offset: 0,
-    search: undefined,
-    sortBy: 'createdAt',
-    sortOrder: 'asc',
-    commentsCountOperator: undefined,
-    commentsCountValue: undefined,
-    tagIds: undefined
-  });
-
-  return userPostsResult.posts.filter(post => post.user.id === userId);
-}
-
-// Helper function to collect comments on user's posts
+// Collect comments on user's posts
 async function getCommentsOnUserPosts(userPosts: any[], commentRepo: ICommentRepo) {
   const commentsOnPosts = [];
   
@@ -67,40 +50,6 @@ async function getCommentsOnUserPosts(userPosts: any[], commentRepo: ICommentRep
   }
   
   return commentsOnPosts;
-}
-
-// Helper function to collect user's comments on all posts
-async function getUserComments(userId: string, postRepo: IPostRepo, commentRepo: ICommentRepo) {
-  const allPostsResult = await postRepo.getPosts({
-    limit: 10000,
-    offset: 0,
-    search: undefined,
-    sortBy: 'createdAt',
-    sortOrder: 'asc',
-    commentsCountOperator: undefined,
-    commentsCountValue: undefined,
-    tagIds: undefined
-  });
-
-  const userComments = [];
-  
-  for (const post of allPostsResult.posts) {
-    const comments = await commentRepo.getComments(post.id);
-    const userCommentsOnThisPost = comments.filter(comment => comment.user.id === userId);
-    userComments.push(...userCommentsOnThisPost);
-  }
-  
-  return userComments;
-}
-
-// Helper function to disable user in Cognito
-async function disableUserInCognito(email: string) {
-  try {
-    await adminDisableUser({ email });
-  } catch (cognitoError) {
-    console.error('Warning: Failed to disable user in Cognito:', cognitoError);
-    // Don't throw error - Cognito failure shouldn't break the transaction
-  }
 }
 
 export async function archiveUser(
@@ -123,9 +72,9 @@ export async function archiveUser(
       const user = await validateUserForArchiving(userId, archivedUserRepo, userRepo);
 
       // Collect user's data
-      const userPosts = await getUserPosts(userId, postRepo);
+      const userPosts = await postRepo.getAllPostsByUserId(userId);
       const commentsOnPosts = await getCommentsOnUserPosts(userPosts, commentRepo);
-      const userComments = await getUserComments(userId, postRepo, commentRepo);
+      const userComments = await commentRepo.getAllCommentsByUserId(userId);
 
       const archivedData = {
         originalUserId: user.id,
@@ -136,14 +85,14 @@ export async function archiveUser(
         archivedBy
       };
 
-      // Create archived user record (within transaction)
+      // Create archived user record
       const archivedUser = await archivedUserRepo.createArchivedUser(archivedData);
 
-      // Delete user from database (CASCADE handles related data)
+      // Delete user from database
       await userRepo.deleteUser(userId);
 
-      // Disable user in Cognito (non-blocking)
-      await disableUserInCognito(user.email);
+      // Disable user in Cognito
+      await adminDisableUser({ email: user.email });
 
       return {
         success: true,

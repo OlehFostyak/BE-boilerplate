@@ -1,8 +1,8 @@
 import { eq, desc, getTableColumns } from 'drizzle-orm';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { ICommentRepo } from 'src/types/comments/ICommentRepo';
-import { CommentSchema, DeleteCommentByIdRepoParams } from 'src/types/comments/Comment';
-import { commentTable, userTable, postTable } from 'src/services/drizzle/schema';
+import { CommentSchema } from 'src/types/comments/Comment';
+import { commentTable, userTable } from 'src/services/drizzle/schema';
 import { getUserFields } from 'src/services/drizzle/utils/user-fields';
 
 export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
@@ -86,6 +86,20 @@ export function getCommentRepo(db: NodePgDatabase): ICommentRepo {
       await db.delete(commentTable).where(eq(commentTable.id, id));
       
       return CommentSchema.parse(comment[0]);
+    },
+
+    async getAllCommentsByUserId(userId) {
+      const comments = await db
+        .select({
+          ...getTableColumns(commentTable),
+          user: getUserFields()
+        })
+        .from(commentTable)
+        .leftJoin(userTable, eq(userTable.id, commentTable.userId))
+        .where(eq(commentTable.userId, userId))
+        .orderBy(desc(commentTable.createdAt));
+        
+      return comments.map(comment => CommentSchema.parse(comment));
     }
   };
 }

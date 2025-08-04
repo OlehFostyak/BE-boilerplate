@@ -6,4 +6,6 @@ export interface ICommentRepo {
   getCommentById(id: string): Promise<Comment | null>;
   updateCommentById(id: string, data: CommentUpdate): Promise<Comment | null>;
   deleteCommentById(id: string): Promise<Comment | null>;
+  // Methods for archiving - get ALL user data without pagination
+  getAllCommentsByUserId(userId: string): Promise<Comment[]>;
 }
