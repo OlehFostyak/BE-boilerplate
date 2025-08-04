@@ -215,6 +215,43 @@ export function getPostRepo(db: NodePgDatabase): IPostRepo {
       await db.delete(postTable).where(eq(postTable.id, id));
       
       return PostSchema.parse(post[0]);
+    },
+
+    async getAllPostsByUserId(userId) {
+      const posts = await db
+        .select({
+          ...getTableColumns(postTable),
+          commentsCount: count(commentTable.id),
+          user: getUserFields()
+        })
+        .from(postTable)
+        .leftJoin(commentTable, eq(commentTable.postId, postTable.id))
+        .leftJoin(userTable, eq(userTable.id, postTable.userId))
+        .where(eq(postTable.userId, userId))
+        .groupBy(postTable.id, userTable.id)
+        .orderBy(postTable.createdAt);
+        
+      // Get tags for each post
+      const postsWithTags = await Promise.all(
+        posts.map(async (post) => {
+          const tags = await db
+            .select({
+              ...getTableColumns(tagTable),
+              postsCount: count(postTagTable.id)
+            })
+            .from(tagTable)
+            .innerJoin(postTagTable, eq(postTagTable.tagId, tagTable.id))
+            .where(eq(postTagTable.postId, post.id))
+            .groupBy(tagTable.id);
+            
+          return {
+            ...post,
+            tags
+          };
+        })
+      );
+
+      return postsWithTags.map(post => PostSchema.parse(post));
     }
   };
 }
