@@ -75,6 +75,20 @@ export function getTagRepo(db: NodePgDatabase): ITagRepo {
       return tag.length > 0 ? TagSchema.parse(tag[0]) : null;
     },
 
+    async getTagByName(name) {
+      const tag = await db
+        .select({
+          ...getTableColumns(tagTable),
+          postsCount: count(postTagTable.id)
+        })
+        .from(tagTable)
+        .leftJoin(postTagTable, eq(postTagTable.tagId, tagTable.id))
+        .where(eq(tagTable.name, name))
+        .groupBy(tagTable.id);
+      
+      return tag.length > 0 ? TagSchema.parse(tag[0]) : null;
+    },
+
     async createTag(data) {
       const tag = await db.insert(tagTable).values(data).returning();
       return TagSchema.parse({ ...tag[0], postsCount: 0 });

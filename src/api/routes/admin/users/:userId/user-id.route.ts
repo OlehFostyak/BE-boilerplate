@@ -8,6 +8,8 @@ import {
 import { deactivateUser } from 'src/controllers/admin/deactivate-user';
 import { activateUser } from 'src/controllers/admin/activate-user';
 import { resendInvite } from 'src/controllers/admin/invite-user';
+import { archiveUser } from 'src/controllers/admin/archive-user';
+import { ArchiveUserRespSchema } from 'src/api/routes/schemas/admin/ArchiveUserSchema';
 
 const userOperationRoute = {
   schema: {
@@ -31,6 +33,20 @@ const resendInviteRoute = {
     response: {
       200: ResendInviteRespSchema,
       404: ErrorResponseSchema,
+      500: ErrorResponseSchema
+    }
+  }
+};
+
+const archiveUserRoute = {
+  schema: {
+    params: z.object({
+      userId: z.string().uuid()
+    }),
+    response: {
+      200: ArchiveUserRespSchema,
+      404: ErrorResponseSchema,
+      409: ErrorResponseSchema,
       500: ErrorResponseSchema
     }
   }
@@ -65,6 +81,22 @@ const routes: FastifyPluginAsync = async function (f) {
       userRepo: fastify.repos.userRepo,
       userId
     });
+  });
+
+  // Archive user and all related data
+  fastify.delete('/archive', archiveUserRoute, async (req) => {
+    const { userId } = req.params;
+
+    const result = await archiveUser({
+      userId,
+      archivedBy: req.userId!,
+      transactionManager: fastify.transactionManager
+    });
+
+    return {
+      success: true as const,
+      data: result
+    };
   });
 };
 
